@@ -21,43 +21,89 @@
         <h2>Export Step Data to Excel</h2>
         
         <p style="margin: 20px 0;">
-            This exports daily step data and weekly targets for participants. 
+            This exports step data and weekly targets for participants. 
             Staff and superuser accounts are automatically excluded from the export.
         </p>
         
-        <form method="post" style="margin: 20px 0;">
-            {% csrf_token %}
-            
-            <div class="form-row">
-                <div>
-                    <label for="participant_id" style="display: block; margin-bottom: 8px; font-weight: bold;">
-                        Select Participant:
-                    </label>
-                    <select name="participant_id" id="participant_id" style="width: 400px; padding: 8px; font-size: 14px;">
-                        <option value="all">All Participants ({{ participants.count }})</option>
-                        {% for participant in participants %}
-                            <option value="{{ participant.id }}">
-                                {{ participant.user.email }} (ID: {{ participant.id }})
-                            </option>
-                        {% endfor %}
-                    </select>
+        <div class="form-row" style="margin: 20px 0;">
+            <div>
+                <label for="participant_id" style="display: block; margin-bottom: 8px; font-weight: bold;">
+                    Select Participant:
+                </label>
+                <select id="participant_id" style="width: 400px; padding: 8px; font-size: 14px;">
+                    <option value="all">All Participants ({{ participants.count }})</option>
+                    {% for participant in participants %}
+                        <option value="{{ participant.id }}">
+                            {{ participant.user.email }} (ID: {{ participant.id }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="margin: 30px 0; display: flex; gap: 20px;">
+            <form method="post" style="flex: 1;">
+                {% csrf_token %}
+                <input type="hidden" name="participant_id" id="weekly_participant_id" value="all">
+                <input type="hidden" name="export_type" value="weekly">
+                
+                <div style="border: 2px solid #417690; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                    <h3 style="margin-top: 0; color: #417690;">📊 Weekly Summary</h3>
+                    <p style="margin: 10px 0; color: #666;">
+                        One row per week with aggregated statistics
+                    </p>
+                    <ul style="margin: 15px 0; font-size: 14px; color: #666;">
+                        <li>Weekly averages and totals</li>
+                        <li>Goal tracking per week</li>
+                        <li>Smaller file size</li>
+                        <li>~5,200 rows for 100 users × 1 year</li>
+                    </ul>
+                    <button type="submit" class="default" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 10px;">
+                        Download Weekly Summary
+                    </button>
                 </div>
-            </div>
-            
-            <div class="submit-row" style="margin-top: 20px;">
-                <input type="submit" value="Download Excel File" class="default" style="padding: 10px 20px; font-size: 14px;">
-            </div>
-        </form>
-        
+            </form>
+
+            <form method="post" style="flex: 1;">
+                {% csrf_token %}
+                <input type="hidden" name="participant_id" id="daily_participant_id" value="all">
+                <input type="hidden" name="export_type" value="daily">
+                
+                <div style="border: 2px solid #79aec8; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                    <h3 style="margin-top: 0; color: #79aec8;">📅 Daily Details</h3>
+                    <p style="margin: 10px 0; color: #666;">
+                        One row per day with weekly calculations
+                    </p>
+                    <ul style="margin: 15px 0; font-size: 14px; color: #666;">
+                        <li>Daily step counts</li>
+                        <li>Complete granular data</li>
+                        <li>Larger file size</li>
+                        <li>~36,500 rows for 100 users × 1 year</li>
+                    </ul>
+                    <button type="submit" class="default" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 10px;">
+                        Download Daily Data
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <div style="margin-top: 30px; padding: 15px; background-color: #f8f8f8; border-left: 4px solid #417690;">
             <h3 style="margin-top: 0;">Export Details</h3>
             <ul style="margin: 10px 0;">
                 <li>File format: Excel (.xlsx)</li>
-                <li>Includes: Daily step data, weekly targets, goal tracking</li>
                 <li>Two sheets: Research Data + Data Dictionary</li>
                 <li>Filename includes timestamp to prevent overwriting</li>
+                <li>Read-only operation - no database changes</li>
             </ul>
         </div>
     </div>
 </div>
+
+<script>
+// Keep both hidden inputs in sync with the dropdown
+document.getElementById('participant_id').addEventListener('change', function() {
+    document.getElementById('weekly_participant_id').value = this.value;
+    document.getElementById('daily_participant_id').value = this.value;
+});
+</script>
 {% endblock %}

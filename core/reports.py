@@ -8,7 +8,7 @@ from openpyxl.utils import get_column_letter
 from .models import Participant
 
 
-def generate_research_excel(participant_id=None):
+def generate_weekly_excel(participant_id=None):
     """
     Generate Excel file with research data - one row per week per participant.
     
@@ -124,7 +124,7 @@ def generate_research_excel(participant_id=None):
             else:
                 prev_target = None
             
-			# Determine if goal was reached
+            # Determine if goal was reached
             if week_num == 1:
                 reached_goal = 'NA'
             elif prev_target and target_data:
@@ -139,7 +139,8 @@ def generate_research_excel(participant_id=None):
             elif not target_data:
                 reached_goal = '4'  # Not enough valid dates
             else:
-                reached_goal = 'NA'            
+                reached_goal = 'NA'
+            
             # Get increment
             if target_data:
                 increment = target_data.get('increase', '')
@@ -217,9 +218,221 @@ def generate_research_excel(participant_id=None):
     # Prepare response
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if participant_id:
-        filename = f'partnersteps_participant_{participant_id}_{timestamp}.xlsx'
+        filename = f'partnersteps_weekly_participant_{participant_id}_{timestamp}.xlsx'
     else:
-        filename = f'partnersteps_research_data_{timestamp}.xlsx'
+        filename = f'partnersteps_weekly_summary_{timestamp}.xlsx'
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    wb.save(response)
+    return response
+
+
+def generate_daily_excel(participant_id=None):
+    """
+    Generate Excel file with daily step data - one row per day.
+    
+    Args:
+        participant_id: If provided, export only this participant. Otherwise export all.
+    
+    Returns:
+        HttpResponse with Excel file
+    """
+    
+    # Get participants (exclude staff and superuser)
+    if participant_id:
+        participants = Participant.objects.select_related('user').filter(
+            id=participant_id,
+            user__is_staff=False,
+            user__is_superuser=False
+        )
+    else:
+        participants = Participant.objects.select_related('user').filter(
+            user__is_staff=False,
+            user__is_superuser=False
+        ).order_by('id')
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Daily Data"
+    
+    # Define headers
+    headers = [
+        'subject_ID',
+        'tx_arm',
+        'start_date',
+        'date',
+        'day_number',
+        'week_number',
+        'daily_steps',
+        'week_total',
+        'week_average',
+        'weekly_target',
+        'reached_goal',
+        'increment',
+        'new_target',
+    ]
+    
+    # Write headers with formatting
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+    
+    current_row = 2
+    
+    # Process each participant
+    for participant in participants:
+        daily_steps = participant.daily_steps or []
+        targets = participant.targets or {}
+        
+        if not daily_steps:
+            continue
+        
+        # Sort daily steps by date
+        sorted_steps = sorted(daily_steps, key=lambda x: x.get('date', ''))
+        
+        # Track for week calculations
+        week_steps = []
+        current_week = None
+        first_row_for_participant = True
+        
+        for step_entry in sorted_steps:
+            step_date = step_entry.get('date')
+            step_value = step_entry.get('value', 0)
+            
+            if not step_date:
+                continue
+            
+            step_date_obj = date.fromisoformat(step_date)
+            days_since_start = (step_date_obj - participant.start_date).days
+            day_number = days_since_start + 1
+            week_number = (days_since_start // 7) + 1
+            
+            # Check if we're starting a new week
+            if current_week != week_number:
+                week_steps = []
+                current_week = week_number
+            
+            week_steps.append(step_value)
+            
+            # Write basic daily data
+            ws.cell(row=current_row, column=1, value=participant.id)
+            ws.cell(row=current_row, column=2, value=participant.treatment_arm)
+            
+            # start_date only on first row
+            if first_row_for_participant:
+                ws.cell(row=current_row, column=3, value=participant.start_date)
+                first_row_for_participant = False
+            
+            ws.cell(row=current_row, column=4, value=step_date_obj)
+            ws.cell(row=current_row, column=5, value=day_number)
+            ws.cell(row=current_row, column=6, value=week_number)
+            ws.cell(row=current_row, column=7, value=step_value)
+            
+            # Check if this is last day of week (day 7, 14, 21, etc.)
+            if day_number % 7 == 0 and day_number >= 7:
+                # Calculate week totals
+                week_total = sum(week_steps)
+                week_avg = round(week_total / len(week_steps)) if week_steps else 0
+                
+                ws.cell(row=current_row, column=8, value=week_total)
+                ws.cell(row=current_row, column=9, value=week_avg)
+                
+                # Get target data
+                week_start_date = participant.start_date + timedelta(days=(week_number - 1) * 7)
+                week_key = week_start_date.strftime("%Y-%m-%d")
+                target_data = targets.get(week_key, {})
+                
+                # Get previous week's target
+                if week_number > 1:
+                    prev_week_start = week_start_date - timedelta(days=7)
+                    prev_week_key = prev_week_start.strftime("%Y-%m-%d")
+                    prev_target_data = targets.get(prev_week_key, {})
+                    prev_target = prev_target_data.get('new_target', None)
+                else:
+                    prev_target = None
+                
+                ws.cell(row=current_row, column=10, value=prev_target if prev_target else 'NA')
+                
+                # Reached goal
+                if week_number == 1:
+                    reached_goal = 'NA'
+                elif prev_target and target_data:
+                    average_from_target = target_data.get('average_steps', week_avg)
+                    try:
+                        avg_int = int(average_from_target)
+                        target_int = int(prev_target)
+                        reached_goal = 'Yes' if avg_int >= target_int else 'No'
+                    except (ValueError, TypeError):
+                        reached_goal = 'NA'
+                elif not target_data:
+                    reached_goal = '4'
+                else:
+                    reached_goal = 'NA'
+                
+                ws.cell(row=current_row, column=11, value=reached_goal)
+                
+                # Increment and new target
+                if target_data:
+                    ws.cell(row=current_row, column=12, value=target_data.get('increase', ''))
+                    ws.cell(row=current_row, column=13, value=target_data.get('new_target', ''))
+                elif week_number > 1 and prev_target:
+                    ws.cell(row=current_row, column=12, value='')
+                    ws.cell(row=current_row, column=13, value=prev_target)
+            
+            current_row += 1
+    
+    # Auto-size columns
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+    
+    # Create Dictionary sheet
+    ws_dict = wb.create_sheet("Dictionary")
+    dict_headers = ['variable', 'Plain English', 'Choices', 'Note']
+    
+    for col_num, header in enumerate(dict_headers, 1):
+        cell = ws_dict.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True)
+    
+    dictionary_data = [
+        ('subject_ID', 'Participant ID number', 'unique identifier', None),
+        ('tx_arm', 'treatment arm', '0=Control | 1=Intervention', None),
+        ('start_date', 'First day Fitbit was used', 'YYYY-MM-DD', 'Shown on first row only'),
+        ('date', 'Date for this row', 'YYYY-MM-DD', 'Daily date'),
+        ('day_number', 'Day number in study', '1, 2, 3, ...', 'Days since start'),
+        ('week_number', 'Week number in study', '1, 2, 3, ...', 'Week 1 is baseline'),
+        ('daily_steps', 'Steps for this day', 'whole number', None),
+        ('week_total', 'Total steps for week', 'whole number', 'Shown on last day of week'),
+        ('week_average', 'Average steps for week', 'whole number', 'Shown on last day of week'),
+        ('weekly_target', 'Target for this week', 'steps/day', 'Set at end of previous week'),
+        ('reached_goal', 'Met weekly target?', 'Yes | No | NA | 4', 'Shown on last day of week'),
+        ('increment', 'Target adjustment', '+250, +500, +1000, maintain', 'Shown on last day of week'),
+        ('new_target', 'Target for next week', 'steps/day', 'Shown on last day of week'),
+    ]
+    
+    for row_num, (var, plain, choices, note) in enumerate(dictionary_data, 2):
+        ws_dict.cell(row=row_num, column=1, value=var)
+        ws_dict.cell(row=row_num, column=2, value=plain)
+        ws_dict.cell(row=row_num, column=3, value=choices)
+        ws_dict.cell(row=row_num, column=4, value=note)
+    
+    for col in range(1, len(dict_headers) + 1):
+        ws_dict.column_dimensions[get_column_letter(col)].width = 30
+    
+    # Prepare response
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    if participant_id:
+        filename = f'partnersteps_daily_participant_{participant_id}_{timestamp}.xlsx'
+    else:
+        filename = f'partnersteps_daily_data_{timestamp}.xlsx'
     
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

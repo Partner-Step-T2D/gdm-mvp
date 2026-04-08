@@ -39,7 +39,7 @@ def generate_weekly_excel(participant_id=None):
     
     # Define headers
     headers = [
-        'subject_ID',
+        'email',
         'tx_arm',
         'start_date',
         'week_number',
@@ -47,7 +47,7 @@ def generate_weekly_excel(participant_id=None):
         'week_average',
         'days_with_data',
         'total_steps',
-        'previous_week_target',
+        'weekly_target',
         'reached_goal',
         'increment',
         'new_target',
@@ -134,7 +134,7 @@ def generate_weekly_excel(participant_id=None):
                     reached_goal = 'Yes' if avg_int >= target_int else 'No'
                 except (ValueError, TypeError):
                     reached_goal = 'NA'
-            elif not target_data:
+            elif not this_week_data:
                 reached_goal = '4'  # Not enough valid dates
             else:
                 reached_goal = 'NA'
@@ -194,10 +194,10 @@ def generate_weekly_excel(participant_id=None):
         ('start_date', 'First day the Fitbit was used', 'YYYY-MM-DD format', 'Shown only on first row per participant'),
         ('week_number', 'Study week number', '1, 2, 3, ...', 'Week 1 is baseline'),
         ('week_start_date', 'First day of this week', 'YYYY-MM-DD format', 'Shown for every week'),
-        ('week_average', 'Average daily steps for this week', 'whole number', 'Rounded down'),
+        ('week_average', 'Average daily steps for this week', 'whole number', 'Rounded down to nearest integer'),
         ('days_with_data', 'Number of days with step data', '0-7', 'Days with synced Fitbit data'),
         ('total_steps', 'Total steps for the week', 'whole number', 'Sum of all daily steps'),
-        ('previous_week_target', 'This week\'s target that was set last week', 'steps/day', 'Set at end of previous week'),
+        ('weekly_target', 'Target for this week', 'steps/day', 'Set at end of previous week'),
         ('reached_goal', 'Did participant reach the target?', 'Yes | No | NA | 4', 'NA for week 1; 4 = insufficient data'),
         ('increment', 'How target was adjusted', '+250, +500, +1000, maintain, etc.', 'Based on algorithm'),
         ('new_target', 'Target set for next week', 'steps/day', 'Calculated at end of this week'),
@@ -264,12 +264,10 @@ def generate_daily_excel(participant_id=None):
         'tx_arm',
         'start_date',
         'date',
-        'day_number',
         'week_number',
         'daily_steps',
-        'week_total',
         'week_average',
-        'previous_week_target',
+        'weekly_target',
         'reached_goal',
         'increment',
         'new_target',
@@ -330,18 +328,16 @@ def generate_daily_excel(participant_id=None):
                 first_row_for_participant = False
             
             ws.cell(row=current_row, column=4, value=step_date_obj)
-            ws.cell(row=current_row, column=5, value=day_number)
-            ws.cell(row=current_row, column=6, value=week_number)
-            ws.cell(row=current_row, column=7, value=step_value)
+            ws.cell(row=current_row, column=5, value=week_number)
+            ws.cell(row=current_row, column=6, value=step_value)
             
             # Check if this is last day of week (day 7, 14, 21, etc.)
             if day_number % 7 == 0 and day_number >= 7:
-                # Calculate week totals
+                # Calculate week average
                 week_total = sum(week_steps)
                 week_avg = int(week_total / len(week_steps)) if week_steps else 0
                 
-                ws.cell(row=current_row, column=8, value=week_total)
-                ws.cell(row=current_row, column=9, value=week_avg)
+                ws.cell(row=current_row, column=7, value=week_avg)
                 
                 # Get target data - targets are keyed by the NEXT week's start date
                 week_start_date = participant.start_date + timedelta(days=(week_number - 1) * 7)
@@ -353,7 +349,8 @@ def generate_daily_excel(participant_id=None):
                 week_key = week_start_date.strftime("%Y-%m-%d")
                 this_week_data = targets.get(week_key, {})
                 prev_target = this_week_data.get('new_target', None) if week_number > 1 else None
-                ws.cell(row=current_row, column=10, value=prev_target if prev_target else 'NA')
+                
+                ws.cell(row=current_row, column=8, value=prev_target if prev_target else 'NA')
                 
                 # Reached goal
                 if week_number == 1:
@@ -366,20 +363,20 @@ def generate_daily_excel(participant_id=None):
                         reached_goal = 'Yes' if avg_int >= target_int else 'No'
                     except (ValueError, TypeError):
                         reached_goal = 'NA'
-                elif not target_data:
+                elif not this_week_data:
                     reached_goal = '4'
                 else:
                     reached_goal = 'NA'
                 
-                ws.cell(row=current_row, column=11, value=reached_goal)
+                ws.cell(row=current_row, column=9, value=reached_goal)
                 
                 # Increment and new target
                 if target_data:
-                    ws.cell(row=current_row, column=12, value=target_data.get('increase', ''))
-                    ws.cell(row=current_row, column=13, value=target_data.get('new_target', ''))
+                    ws.cell(row=current_row, column=10, value=target_data.get('increase', ''))
+                    ws.cell(row=current_row, column=11, value=target_data.get('new_target', ''))
                 elif week_number > 1 and prev_target:
-                    ws.cell(row=current_row, column=12, value='')
-                    ws.cell(row=current_row, column=13, value=prev_target)
+                    ws.cell(row=current_row, column=10, value='')
+                    ws.cell(row=current_row, column=11, value=prev_target)
             
             current_row += 1
     
@@ -401,12 +398,10 @@ def generate_daily_excel(participant_id=None):
         ('tx_arm', 'treatment arm', '0=Control | 1=Intervention', None),
         ('start_date', 'First day Fitbit was used', 'YYYY-MM-DD', 'Shown on first row only'),
         ('date', 'Date for this row', 'YYYY-MM-DD', 'Daily date'),
-        ('day_number', 'Day number in study', '1, 2, 3, ...', 'Days since start'),
         ('week_number', 'Week number in study', '1, 2, 3, ...', 'Week 1 is baseline'),
         ('daily_steps', 'Steps for this day', 'whole number', None),
-        ('week_total', 'Total steps for week', 'whole number', 'Shown on last day of week'),
-        ('week_average', 'Average steps for week', 'whole number', 'Shown on last day of week'),
-        ('previous_week_target', 'This week\'s target that was set last week', 'steps/day', 'Set at end of previous week'),
+        ('week_average', 'Average steps for week', 'whole number', 'Shown on last day of week, rounded down'),
+        ('weekly_target', 'Target for this week', 'steps/day', 'Set at end of previous week'),
         ('reached_goal', 'Met weekly target?', 'Yes | No | NA | 4', 'Shown on last day of week'),
         ('increment', 'Target adjustment', '+250, +500, +1000, maintain', 'Shown on last day of week'),
         ('new_target', 'Target for next week', 'steps/day', 'Shown on last day of week'),

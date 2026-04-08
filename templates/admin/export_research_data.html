@@ -30,7 +30,7 @@
                 <label for="participant_id" style="display: block; margin-bottom: 8px; font-weight: bold;">
                     Select Participant:
                 </label>
-                <select id="participant_id" style="width: 400px; padding: 8px; font-size: 14px;">
+                <select id="participant_id" style="width: 400px; font-size: 14px;">
                     <option value="all">All Participants ({{ participants.count }})</option>
                     {% for participant in participants %}
                         <option value="{{ participant.id }}">

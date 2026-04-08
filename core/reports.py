@@ -44,7 +44,7 @@ def generate_weekly_excel(participant_id=None):
         'start_date',
         'week_number',
         'week_start_date',
-        'avg_steps_per_day',
+        'week_average',
         'days_with_data',
         'total_steps',
         'previous_week_target',
@@ -109,7 +109,7 @@ def generate_weekly_excel(participant_id=None):
             # Calculate week statistics
             days_with_data = len(week_steps)
             total_steps = sum(week_steps)
-            avg_steps = round(total_steps / days_with_data) if days_with_data > 0 else 0
+            avg_steps = int(total_steps / days_with_data) if days_with_data > 0 else 0
             
             # Get target data for this week
             week_key = week_start.strftime("%Y-%m-%d")
@@ -157,7 +157,7 @@ def generate_weekly_excel(participant_id=None):
                 new_target = ''
             
             # Write row
-            ws.cell(row=current_row, column=1, value=participant.id)
+            ws.cell(row=current_row, column=1, value=participant.user.email)
             ws.cell(row=current_row, column=2, value=participant.treatment_arm)
             
             # start_date only on first week for this participant
@@ -191,15 +191,15 @@ def generate_weekly_excel(participant_id=None):
     
     # Add dictionary entries
     dictionary_data = [
-        ('subject_ID', 'Participant ID number', 'unique identifier', None),
+        ('email', 'Participant email', 'unique identifier', None),
         ('tx_arm', 'treatment arm', '0=Control | 1=Intervention', 'Does not change week to week'),
         ('start_date', 'First day the Fitbit was used', 'YYYY-MM-DD format', 'Shown only on first row per participant'),
         ('week_number', 'Study week number', '1, 2, 3, ...', 'Week 1 is baseline'),
         ('week_start_date', 'First day of this week', 'YYYY-MM-DD format', 'Shown for every week'),
-        ('avg_steps_per_day', 'Average daily steps for this week', 'whole number', 'Rounded to nearest integer'),
+        ('week_average', 'Average daily steps for this week', 'whole number', 'Rounded down'),
         ('days_with_data', 'Number of days with step data', '0-7', 'Days with synced Fitbit data'),
         ('total_steps', 'Total steps for the week', 'whole number', 'Sum of all daily steps'),
-        ('previous_week_target', 'Target that was set for this week', 'steps/day', 'Set at end of previous week'),
+        ('previous_week_target', 'This week\'s target that was set last week', 'steps/day', 'Set at end of previous week'),
         ('reached_goal', 'Did participant reach the target?', 'Yes | No | NA | 4', 'NA for week 1; 4 = insufficient data'),
         ('increment', 'How target was adjusted', '+250, +500, +1000, maintain, etc.', 'Based on algorithm'),
         ('new_target', 'Target set for next week', 'steps/day', 'Calculated at end of this week'),
@@ -262,7 +262,7 @@ def generate_daily_excel(participant_id=None):
     
     # Define headers
     headers = [
-        'subject_ID',
+        'email',
         'tx_arm',
         'start_date',
         'date',
@@ -271,7 +271,7 @@ def generate_daily_excel(participant_id=None):
         'daily_steps',
         'week_total',
         'week_average',
-        'weekly_target',
+        'previous_week_target',
         'reached_goal',
         'increment',
         'new_target',
@@ -323,7 +323,7 @@ def generate_daily_excel(participant_id=None):
             week_steps.append(step_value)
             
             # Write basic daily data
-            ws.cell(row=current_row, column=1, value=participant.id)
+            ws.cell(row=current_row, column=1, value=participant.user.email)
             ws.cell(row=current_row, column=2, value=participant.treatment_arm)
             
             # start_date only on first row
@@ -340,7 +340,7 @@ def generate_daily_excel(participant_id=None):
             if day_number % 7 == 0 and day_number >= 7:
                 # Calculate week totals
                 week_total = sum(week_steps)
-                week_avg = round(week_total / len(week_steps)) if week_steps else 0
+                week_avg = int(week_total / len(week_steps)) if week_steps else 0
                 
                 ws.cell(row=current_row, column=8, value=week_total)
                 ws.cell(row=current_row, column=9, value=week_avg)
@@ -403,7 +403,7 @@ def generate_daily_excel(participant_id=None):
         cell.font = Font(bold=True)
     
     dictionary_data = [
-        ('subject_ID', 'Participant ID number', 'unique identifier', None),
+        ('email', 'Participant email', 'unique identifier', None),
         ('tx_arm', 'treatment arm', '0=Control | 1=Intervention', None),
         ('start_date', 'First day Fitbit was used', 'YYYY-MM-DD', 'Shown on first row only'),
         ('date', 'Date for this row', 'YYYY-MM-DD', 'Daily date'),
@@ -412,7 +412,7 @@ def generate_daily_excel(participant_id=None):
         ('daily_steps', 'Steps for this day', 'whole number', None),
         ('week_total', 'Total steps for week', 'whole number', 'Shown on last day of week'),
         ('week_average', 'Average steps for week', 'whole number', 'Shown on last day of week'),
-        ('weekly_target', 'Target for this week', 'steps/day', 'Set at end of previous week'),
+        ('previous_week_target', 'This week\'s target that was set last week', 'steps/day', 'Set at end of previous week'),
         ('reached_goal', 'Met weekly target?', 'Yes | No | NA | 4', 'Shown on last day of week'),
         ('increment', 'Target adjustment', '+250, +500, +1000, maintain', 'Shown on last day of week'),
         ('new_target', 'Target for next week', 'steps/day', 'Shown on last day of week'),

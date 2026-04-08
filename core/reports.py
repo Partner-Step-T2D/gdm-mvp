@@ -111,18 +111,16 @@ def generate_weekly_excel(participant_id=None):
             total_steps = sum(week_steps)
             avg_steps = int(total_steps / days_with_data) if days_with_data > 0 else 0
             
-            # Get target data for this week
-            week_key = week_start.strftime("%Y-%m-%d")
-            target_data = targets.get(week_key, {})
+            # Get target data - targets are keyed by the NEXT week's start date
+            # because they contain THIS week's average and NEXT week's target
+            next_week_start = week_start + timedelta(days=7)
+            next_week_key = next_week_start.strftime("%Y-%m-%d")
+            target_data = targets.get(next_week_key, {})
             
-            # Get previous week's target
-            if week_num > 1:
-                prev_week_start = week_start - timedelta(days=7)
-                prev_week_key = prev_week_start.strftime("%Y-%m-%d")
-                prev_target_data = targets.get(prev_week_key, {})
-                prev_target = prev_target_data.get('new_target', None)
-            else:
-                prev_target = None
+            # Get previous week's target (which is stored in THIS week's entry)
+            week_key = week_start.strftime("%Y-%m-%d")
+            this_week_data = targets.get(week_key, {})
+            prev_target = this_week_data.get('new_target', None) if week_num > 1 else None
             
             # Determine if goal was reached
             if week_num == 1:
@@ -345,20 +343,16 @@ def generate_daily_excel(participant_id=None):
                 ws.cell(row=current_row, column=8, value=week_total)
                 ws.cell(row=current_row, column=9, value=week_avg)
                 
-                # Get target data
+                # Get target data - targets are keyed by the NEXT week's start date
                 week_start_date = participant.start_date + timedelta(days=(week_number - 1) * 7)
+                next_week_start = week_start_date + timedelta(days=7)
+                next_week_key = next_week_start.strftime("%Y-%m-%d")
+                target_data = targets.get(next_week_key, {})
+                
+                # Get previous week's target (stored in THIS week's entry)
                 week_key = week_start_date.strftime("%Y-%m-%d")
-                target_data = targets.get(week_key, {})
-                
-                # Get previous week's target
-                if week_number > 1:
-                    prev_week_start = week_start_date - timedelta(days=7)
-                    prev_week_key = prev_week_start.strftime("%Y-%m-%d")
-                    prev_target_data = targets.get(prev_week_key, {})
-                    prev_target = prev_target_data.get('new_target', None)
-                else:
-                    prev_target = None
-                
+                this_week_data = targets.get(week_key, {})
+                prev_target = this_week_data.get('new_target', None) if week_number > 1 else None
                 ws.cell(row=current_row, column=10, value=prev_target if prev_target else 'NA')
                 
                 # Reached goal

@@ -175,3 +175,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 FITBIT_REDIRECT_URI = globals().get('FITBIT_REDIRECT_URI') or os.getenv("FITBIT_REDIRECT_URI", "http://localhost:8000/fitbit/callback/")
 FITBIT_CLIENT_ID = globals().get('FITBIT_CLIENT_ID') or os.getenv("FITBIT_CLIENT_ID")
 FITBIT_CLIENT_SECRET = globals().get('FITBIT_CLIENT_SECRET') or os.getenv("FITBIT_CLIENT_SECRET")
+
+GOOGLE_CLIENT_ID = globals().get('GOOGLE_CLIENT_ID') or os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = globals().get('GOOGLE_CLIENT_SECRET') or os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = globals().get('GOOGLE_REDIRECT_URI') or os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/oauth/callback/")

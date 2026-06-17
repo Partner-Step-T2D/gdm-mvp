@@ -87,6 +87,10 @@ class Participant(models.Model):
     fitbit_token_expires = models.DateTimeField(null=True, blank=True)
     fitbit_auth_token = models.UUIDField(default=uuid.uuid4, unique=True)
     
+    google_access_token = models.TextField(null=True, blank=True)
+    google_refresh_token = models.TextField(null=True, blank=True)
+    google_token_expires = models.DateTimeField(null=True, blank=True)
+    
     # New: Status flags for error/success tracking (Fitbit and general process)
     status_flags = models.JSONField(default=dict, blank=True, help_text="Flexible status and error flags for sync, auth, etc.")
 

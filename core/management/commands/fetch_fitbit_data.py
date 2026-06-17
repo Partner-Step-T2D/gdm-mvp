@@ -3,12 +3,13 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from core.models import Participant
 from device_integration.fitbit import fetch_fitbit_data_for_participant, _log_status_flag
+from device_integration.google_health import fetch_google_data_for_participant
 import logging
 
 logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
-    help = 'Fetch Fitbit data for all participants with connected Fitbit accounts'
+    help = 'Fetch step data for all participants with connected accounts'
     
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,7 +25,7 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         start_time = timezone.now()
-        self.stdout.write(f"Starting Fitbit data fetch at {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.stdout.write(f"Starting data fetch at {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         # Get participants to process
         if options['participant_id']:
@@ -45,14 +46,13 @@ class Command(BaseCommand):
         
         for participant in all_participants:
             token = participant.fitbit_access_token
-            # Check if token is None, empty, or just whitespace
-            if not token or not token.strip():
+            google_token = participant.google_access_token
+            if (not token or not token.strip()) and (not google_token or not google_token.strip()):
                 invalid_token_participants.append(participant)
-                # Log error using proper helper function
                 _log_status_flag(
-                    participant, 
-                    "fetch_fitbit_data_fail", 
-                    "No Fitbit access token - device not connected"
+                    participant,
+                    "fetch_fitbit_data_fail",
+                    "No access token - device not connected"
                 )
             else:
                 valid_token_participants.append(participant)
@@ -61,12 +61,12 @@ class Command(BaseCommand):
         if invalid_token_participants:
             self.stdout.write(
                 self.style.WARNING(
-                    f"⚠️  {len(invalid_token_participants)} participant(s) without valid Fitbit tokens:"
+                    f"⚠️  {len(invalid_token_participants)} participant(s) without valid tokens:"
                 )
             )
             for p in invalid_token_participants:
                 self.stdout.write(f"   - {p.user.email}: Error logged to status_flags")
-            self.stdout.write("")  # Blank line
+            self.stdout.write("")
         
         # Fetch for participants with valid tokens
         if not valid_token_participants:
@@ -107,11 +107,19 @@ class Command(BaseCommand):
     def fetch_for_participant(self, participant, force=False):
         """Fetch data for a single participant and return success status"""
         try:
-            result, status = fetch_fitbit_data_for_participant(
-                participant.id,
-                force_refetch=force
-            )
-            
+            if participant.google_access_token:
+                # Clear any stale Fitbit error flags
+                _log_status_flag(participant, "fetch_fitbit_data_fail")
+                result, status = fetch_google_data_for_participant(
+                    participant.id,
+                    force_refetch=force
+                )
+            else:
+                result, status = fetch_fitbit_data_for_participant(
+                    participant.id,
+                    force_refetch=force
+                )
+
             if status == 200:
                 steps_count = len(result.get('steps', []))
                 message = result.get('message', '')
@@ -130,10 +138,10 @@ class Command(BaseCommand):
                     self.style.ERROR(f"✗ {participant.user.email}: {error_msg}")
                 )
                 return False
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f"✗ {participant.user.email}: {str(e)}")
             )
-            logger.exception(f"Error fetching Fitbit data for participant {participant.id}")
+            logger.exception(f"Error fetching data for participant {participant.id}")
             return False

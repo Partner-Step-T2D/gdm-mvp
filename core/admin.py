@@ -32,10 +32,10 @@ class ParticipantButtonMixin:
         if obj.pk:
             url = reverse("device_integration:fetch_fitbit_data", args=[obj.pk])
             return format_html(
-                '<a class="button" href="{}" target="_blank">Fetch Fitbit Data</a>', url
+                '<a class="button" href="{}" target="_blank">Fetch Step Data</a>', url
             )
         return "Save participant first"
-    fetch_fitbit_data_button.short_description = "Fetch Fitbit Data"
+    fetch_fitbit_data_button.short_description = "Fetch Step Data"
 
     def authenticate_fitbit_button(self, obj):
         if obj.pk:
@@ -45,6 +45,14 @@ class ParticipantButtonMixin:
             )
         return "Save participant first"
     authenticate_fitbit_button.short_description = "Fitbit Authentication"
+
+    def authenticate_google_button(self, obj):
+        if obj.pk:
+            return format_html(
+                '<a class="button" href="/oauth/start/{}/" target="_blank">Authenticate Google</a>', obj.pk
+            )
+        return "Save participant first"
+    authenticate_google_button.short_description = "Google Authentication"
 
     def send_notification_button(self, obj):
         """Button to send goal notification - only enabled if recent goals exist"""
@@ -100,6 +108,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'daily_steps_display',
         'targets_display',
         'authenticate_fitbit_button',
+        'authenticate_google_button',
         'fetch_fitbit_data_button',
         'calculate_weekly_goals_button',
         'send_notification_button',
@@ -108,6 +117,9 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'fitbit_token_expires',
         'fitbit_auth_token',
         'device_type',
+        'google_access_token',
+        'google_refresh_token',
+        'google_token_expires',
     ]
     
     def get_readonly_fields(self, request, obj=None):
@@ -164,10 +176,14 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'fitbit_token_expires',
             'fitbit_auth_token',
             'device_type',
+            'google_access_token',
+            'google_refresh_token',
+            'google_token_expires',
         ]
         
         button_fields = [
             'authenticate_fitbit_button',
+            'authenticate_google_button',
             'fetch_fitbit_data_button',
             'calculate_weekly_goals_button',
             'send_notification_button',

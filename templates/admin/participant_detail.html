@@ -237,7 +237,7 @@
         
         {% if error_info.fitbit_data_error %}
           <div class="error-item">
-            <div class="error-type">Fitbit Data Fetch Error</div>
+            <div class="error-type">Data Fetch Error</div>
             <div class="error-message">{{ error_info.fitbit_data_error.message }}</div>
             {% if error_info.fitbit_data_error.timestamp %}
               <div class="error-timestamp">Last occurred: {{ error_info.fitbit_data_error.timestamp }}</div>
@@ -247,7 +247,7 @@
         
         {% if error_info.fitbit_token_error %}
           <div class="error-item">
-            <div class="error-type">Fitbit Token Refresh Error</div>
+            <div class="error-type">Token Refresh Error</div>
             <div class="error-message">{{ error_info.fitbit_token_error.message }}</div>
             {% if error_info.fitbit_token_error.timestamp %}
               <div class="error-timestamp">Last occurred: {{ error_info.fitbit_token_error.timestamp }}</div>

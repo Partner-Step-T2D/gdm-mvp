@@ -30,7 +30,7 @@ class ParticipantButtonMixin:
 
     def fetch_fitbit_data_button(self, obj):
         if obj.pk:
-            url = reverse("device_integration:fetch_fitbit_data", args=[obj.pk])
+            url = reverse("device_integration:fetch_step_data", args=[obj.pk])
             return format_html(
                 '<a class="button" href="{}" target="_blank">Fetch Step Data</a>', url
             )

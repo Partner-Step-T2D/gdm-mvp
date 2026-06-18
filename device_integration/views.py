@@ -42,3 +42,29 @@ def fetch_fitbit_data(request, participant_id):
             "error": result.get("error", "Unknown error")
         }
     return render(request, "admin/popup_result.html", context)
+
+def fetch_step_data(request, participant_id):
+    """Admin button fetch — routes to Google or Fitbit based on token presence."""
+    from device_integration.google_health import fetch_google_data_for_participant
+
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    if participant.google_access_token:
+        result, status = fetch_google_data_for_participant(participant_id)
+        source = "Google Health"
+    else:
+        result, status = fetch_fitbit_data_for_participant(participant_id)
+        source = "Fitbit"
+
+    if status == 200:
+        context = {
+            "success": True,
+            "fitbit_id": participant.fitbit_user_id,
+            "message": f"{source}: Fetched {len(result.get('steps', []))} days of steps."
+        }
+    else:
+        context = {
+            "success": False,
+            "error": result.get("error", "Unknown error")
+        }
+    return render(request, "admin/popup_result.html", context)

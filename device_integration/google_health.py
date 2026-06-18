@@ -81,6 +81,7 @@ def fetch_google_data_for_participant(participant_id, force_refetch=False):
             }
 
             resp = requests.post(url, headers=headers, json=body, timeout=10)
+            print(f"DEBUG chunk {chunk_start} to {chunk_end}: status={resp.status_code} body={resp.text[:500]}")
 
             if resp.status_code != 200:
                 return {"error": resp.text}, resp.status_code

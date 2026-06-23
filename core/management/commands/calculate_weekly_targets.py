@@ -159,11 +159,11 @@ class Command(BaseCommand):
                 toronto_tz = ZoneInfo('America/Toronto')
                 now_toronto = now_utc.astimezone(toronto_tz)
                 
-                if now_toronto.hour >= 17:
+                if now_toronto.hour >= 22:
                     # It's 5 PM or later - use fallback logic
                     self.stdout.write(
                         self.style.WARNING(
-                            f"⚠  {participant.user.email}: No data for target day by 17:00 - using fallback logic"
+                            f"⚠  {participant.user.email}: No data for target day by 22:00 - using fallback logic"
                         )
                     )
                     return self.calculate_with_fallback(participant, skip_notifications)

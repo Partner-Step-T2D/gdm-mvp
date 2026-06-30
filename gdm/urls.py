@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from core.admin_dashboard_views import dashboard_view, participant_detail_view, export_research_data_view
+from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/dashboard/', dashboard_view, name='admin-dashboard'),

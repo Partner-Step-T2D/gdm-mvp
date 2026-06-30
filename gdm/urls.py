@@ -11,4 +11,5 @@ urlpatterns = [
     path('fitbit/', include('device_integration.urls', namespace='device_integration')),
     path('oauth/', include('device_integration.google_urls')),
     path('goals/', include('goals.urls')),
+    path('', RedirectView.as_view(url='/admin/', permanent=False)),
 ]

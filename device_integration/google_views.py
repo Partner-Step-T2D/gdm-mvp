@@ -9,6 +9,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404, render
+from django.core.mail import send_mail
+from django.http import HttpResponse
 
 
 def google_auth_start(request, participant_id):
@@ -79,3 +81,41 @@ def google_callback(request):
     if request.user.is_authenticated and request.user.is_staff:
     	return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
     return render(request, "admin/google_success.html")
+
+
+def send_auth_link(request, participant_id):
+    if request.method != "POST":
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(["POST"])
+    participant = get_object_or_404(Participant, pk=participant_id)
+    
+    # Build the OAuth start URL
+    auth_url = request.build_absolute_uri(f"/oauth/start/{participant.pk}/")
+    
+    # Bilingual email body
+    subject = "PartnerSteps – Google Health Authorization / Autorisation Google Santé"
+    message = (
+        "Please follow this link to initiate the Google Health authorization process:\n"
+        f"{auth_url}\n\n"
+        "Veuillez suivre ce lien pour initier le processus d'autorisation Google Santé :\n"
+        f"{auth_url}\n\n"
+        "Thank you,\nThe Partner Steps Team\n\n"
+        "Merci,\nL'équipe Partner Steps"
+    )
+
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'partnersteprimuhc@gmail.com')
+    recipient_email = participant.user.email
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=from_email,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+        messages.success(request, f"Authorization link sent to {recipient_email}.")
+    except Exception as e:
+        messages.error(request, f"Failed to send email: {str(e)}")
+
+    return redirect(f"/admin/core/customuser/{participant.user.id}/change/")

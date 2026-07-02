@@ -141,7 +141,13 @@
         <a href="{% url 'admin:core_customuser_change' participant.user.id %}" 
            style="color: #007cba; text-decoration: none;">
           Participant Admin Page
-        </a>
+        </a><br>
+        <form method="post" action="/oauth/send-auth-link/{{ participant.id }}/" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" style="background: none; border: none; padding: 0; color: #007cba; text-decoration: none; cursor: pointer; font-size: inherit;">
+            Send Authorization Link
+          </button>
+        </form>
       </div>
     </div>
   </div>

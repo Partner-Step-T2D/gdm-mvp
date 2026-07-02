@@ -10,7 +10,7 @@ urlpatterns = [
     path('admin/participant/<int:participant_id>/', participant_detail_view, name='participant_detail'),
     path('admin/', admin.site.urls),
     path('fitbit/', include('device_integration.urls', namespace='device_integration')),
-    path('oauth/', include('device_integration.google_urls')),
+    path('oauth/', include(('device_integration.google_urls', 'google'), namespace='google')),
     path('goals/', include('goals.urls')),
     path('', RedirectView.as_view(url='/admin/', permanent=False)),
 ]

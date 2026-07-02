@@ -118,4 +118,4 @@ def send_auth_link(request, participant_id):
     except Exception as e:
         messages.error(request, f"Failed to send email: {str(e)}")
 
-    return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
+    return redirect(f"/admin/participant/{participant.id}/")

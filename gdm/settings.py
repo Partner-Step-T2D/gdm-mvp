@@ -56,11 +56,9 @@ GCS_CREDENTIALS_PATH = os.getenv('GCS_CREDENTIALS_PATH', '/etc/secrets/partner-b
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tra=87f2##&6hitv@fj2je!!exyyt)@!@8qthn%pwmv_2oiv5!'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-dev-only')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 

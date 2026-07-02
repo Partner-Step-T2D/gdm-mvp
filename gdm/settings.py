@@ -28,7 +28,7 @@ ADMIN_NOTIFICATION_EMAIL = [
     'partnerstept2d@muhc.mcgill.ca'
 ]
 
-BASE_URL = 'https://app.partnersteps.ca/admin'  # For links in admin emails
+BASE_URL = 'https://gdm-mvp.onrender.com/admin'  # For links in admin emails
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,22 +57,12 @@ GCS_CREDENTIALS_PATH = os.getenv('GCS_CREDENTIALS_PATH', '/etc/secrets/partner-b
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = 'django-insecure-tra=87f2##&6hitv@fj2je!!exyyt)@!@8qthn%pwmv_2oiv5!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = [
-    'app.partnersteps.ca',
-    'gdm-mvp.onrender.com',  # keep during transition
-]
-
-# Security settings
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

@@ -37,15 +37,6 @@ class ParticipantButtonMixin:
         return "Save participant first"
     fetch_fitbit_data_button.short_description = "Fetch Step Data"
 
-    def authenticate_fitbit_button(self, obj):
-        if obj.pk:
-            url = reverse("device_integration:fitbit_auth_start", args=[obj.pk])
-            return format_html(
-                '<a class="button" href="{}" target="_blank">Authenticate Fitbit</a>', url
-            )
-        return "Save participant first"
-    authenticate_fitbit_button.short_description = "Fitbit Authentication"
-
     def authenticate_google_button(self, obj):
         if obj.pk:
             return format_html(
@@ -107,13 +98,10 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
     readonly_fields = [
         'daily_steps_display',
         'targets_display',
-        'authenticate_fitbit_button',
         'authenticate_google_button',
         'fetch_fitbit_data_button',
         'calculate_weekly_goals_button',
         'send_notification_button',
-    	'fitbit_access_token',         
-    	'fitbit_refresh_token',
         'fitbit_token_expires',
         'fitbit_auth_token',
         'device_type',
@@ -170,9 +158,6 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         
         # Technical fields (always readonly)
         tech_fields = [
-            'fitbit_user_id',
-            'fitbit_access_token', 
-            'fitbit_refresh_token',
             'fitbit_token_expires',
             'fitbit_auth_token',
             'device_type',
@@ -180,9 +165,8 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'google_refresh_token',
             'google_token_expires',
         ]
-        
+
         button_fields = [
-            'authenticate_fitbit_button',
             'authenticate_google_button',
             'fetch_fitbit_data_button',
             'calculate_weekly_goals_button',

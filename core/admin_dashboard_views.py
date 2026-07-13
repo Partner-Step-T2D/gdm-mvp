@@ -20,7 +20,8 @@ def get_next_target_day(start_date):
 def dashboard_view(request):
     is_superuser = request.user.is_superuser
     is_manager = request.user.groups.filter(name="Managers").exists() and not is_superuser
-    raw_participants = Participant.objects.select_related('user').all().order_by('start_date')
+    //raw_participants = Participant.objects.select_related('user').all().order_by('start_date')
+    raw_participants = Participant.objects.select_related('user').filter(user__is_active=True).order_by('start_date')
     today = date.today()
     max_days = 7
     groups = defaultdict(list)

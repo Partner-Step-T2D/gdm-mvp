@@ -158,12 +158,12 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         
         # Technical fields (always readonly)
         tech_fields = [
-            'fitbit_token_expires',
-            'fitbit_auth_token',
-            'device_type',
             'google_access_token',
             'google_refresh_token',
             'google_token_expires',
+            'fitbit_token_expires',
+            'fitbit_auth_token',
+            'device_type',
         ]
 
         button_fields = [

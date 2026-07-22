@@ -223,9 +223,11 @@ def send_goal_notification(participant, goal_data):
             
             # ✅ Send a separate copy to CC addresses if any
             if cc_list:
+                cc_subject = f"[CC] {subject} — {recipient_email}"
+                cc_body = f"Sent to: {recipient_email}\n\n{message_body}"
                 send_mail(
-                    subject=f"[CC] {subject}",
-                    message=message_body,
+                    subject = cc_subject,
+                    message = cc_body,
                     from_email=from_email,
                     recipient_list=cc_list,
                     fail_silently=True,  # don't break participant emails if CC fails

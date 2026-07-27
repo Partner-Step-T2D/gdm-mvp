@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator, RegexValidator
+from core.fields import EncryptedTextField
 import uuid
 
 class CustomUserManager(BaseUserManager):
@@ -87,8 +88,10 @@ class Participant(models.Model):
     fitbit_token_expires = models.DateTimeField(null=True, blank=True)
     fitbit_auth_token = models.UUIDField(default=uuid.uuid4, unique=True)
     
-    google_access_token = models.TextField(null=True, blank=True)
-    google_refresh_token = models.TextField(null=True, blank=True)
+    google_access_token = EncryptedTextField(null=True, blank=True)
+    google_refresh_token = EncryptedTextField(null=True, blank=True)
+    backup_email = EncryptedTextField(null=True, blank=True)
+    
     google_token_expires = models.DateTimeField(null=True, blank=True)
     
     # New: Status flags for error/success tracking (Fitbit and general process)

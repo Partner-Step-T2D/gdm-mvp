@@ -28,9 +28,5 @@ class EncryptedTextField(models.TextField):
     def from_db_value(self, value, expression, connection):
         if value is None or value == "":
             return value
-        try:
-            return _get_fernet().decrypt(value.encode()).decode()
-        except InvalidToken:
-            # Value isn't encrypted yet (e.g. pre-migration plaintext row).
-            # Remove this fallback once the data migration has run.
-            return value
+        return _get_fernet().decrypt(value.encode()).decode()
+       

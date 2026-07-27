@@ -11,12 +11,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-try:
-    from .settings_local import *
-except ImportError:
-    pass
-
-
 from pathlib import Path
 
 import dj_database_url
@@ -189,3 +183,13 @@ FITBIT_CLIENT_SECRET = globals().get('FITBIT_CLIENT_SECRET') or os.getenv("FITBI
 GOOGLE_CLIENT_ID = globals().get('GOOGLE_CLIENT_ID') or os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = globals().get('GOOGLE_CLIENT_SECRET') or os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = globals().get('GOOGLE_REDIRECT_URI') or os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/oauth/callback/")
+
+FIELD_ENCRYPTION_KEYS = [
+    k for k in os.environ.get("FIELD_ENCRYPTION_KEYS", "").split(",") if k
+]
+
+try:
+    from .settings_local import *
+except ImportError:
+    pass
+

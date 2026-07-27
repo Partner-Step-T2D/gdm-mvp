@@ -80,7 +80,7 @@ def google_callback(request):
 
     if request.user.is_authenticated and request.user.is_staff:
     	return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
-    return render(request, "admin/google_success.html")
+    return render(request, "admin/google_success.html", {"participant": participant})
 
 
 def send_auth_link(request, participant_id):

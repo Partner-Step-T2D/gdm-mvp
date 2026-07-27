@@ -93,7 +93,7 @@ def send_auth_link(request, participant_id):
     auth_url = request.build_absolute_uri(f"/oauth/start/{participant.pk}/")
     
     # Bilingual email body
-    subject = "PartnerSteps – Google Health Authorization / Autorisation Google Santé"
+    subject = "Partner Step T2D – Google Health Authorization / Autorisation Google Santé"
     message = (
         "Please follow this link to initiate the Google Health authorization process:\n"
         f"{auth_url}\n\n"

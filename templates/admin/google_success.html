@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PartnerStep - Connected</title>
+  <title>Partner Step T2D - Connected</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -13,38 +13,80 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
+      padding: 20px 0;
     }
     .card {
       background: white;
       border-radius: 8px;
       padding: 40px;
-      max-width: 400px;
+      max-width: 480px;
       width: 90%;
-      text-align: center;
+      text-align: left;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     .checkmark {
-      font-size: 60px;
-      margin-bottom: 20px;
+      font-size: 48px;
+      margin-bottom: 10px;
+      text-align: center;
     }
     h1 {
       color: #2d6a4f;
-      font-size: 1.5em;
+      font-size: 1.4em;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      color: #777;
+      font-size: 0.95em;
+      margin-bottom: 25px;
+    }
+    .details {
+      background: #f0f5f3;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.92em;
+      color: #444;
+    }
+    .details div { margin: 4px 0; }
+    .details strong { color: #222; }
+    h2.lang-label {
+      font-size: 0.8em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #999;
+      border-top: 1px solid #eee;
+      padding-top: 18px;
+      margin-top: 22px;
       margin-bottom: 10px;
     }
-    p {
-      color: #555;
+    ul {
+      color: #444;
       line-height: 1.6;
-      margin-bottom: 0;
+      padding-left: 20px;
+      margin: 0 0 16px 0;
+    }
+    p {
+      color: #444;
+      line-height: 1.6;
+      margin: 0 0 16px 0;
     }
     .header-bar {
       background-color: #3d6b84;
       color: white;
       padding: 15px 20px;
       border-radius: 8px 8px 0 0;
-      margin: -40px -40px 30px -40px;
+      margin: -40px -40px 20px -40px;
       font-size: 1.1em;
       font-weight: bold;
+      text-align: center;
+    }
+    .footnote {
+      font-size: 0.8em;
+      color: #999;
+      text-align: center;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -52,8 +94,35 @@
   <div class="card">
     <div class="header-bar">Partner Step T2D</div>
     <div class="checkmark">✓</div>
-    <h1>You're all set!</h1>
-    <p>Your Google Health account has been successfully connected to Partner Step T2D. You can now close this window.</p>
+    <h1>You're all set! / Vous êtes connecté(e)&nbsp;!</h1>
+    <div class="subtitle">Google Health account connected</div>
+
+    <div class="details">
+      <div><strong>Account:</strong> {{ participant.user.email }}</div>
+      <div><strong>Monitoring started:</strong> {{ participant.start_date|date:"F j, Y" }}</div>
+    </div>
+
+    <h2 class="lang-label">English</h2>
+    <p>Your Google Health account is now connected to Partner Step T2D. Here's what happens next:</p>
+    <ul>
+      <li>We regularly check your step count throughout the day.</li>
+      <li>Please make sure the Google Health app on your phone is syncing with your device (watch, tracker, etc.) — we can only see step data that's already reached Google Health.</li>
+      <li>Each week, you'll receive an email with a personalized step target based on your recent activity.</li>
+      <li>If we don't receive data from your device for a few days, we'll send a friendly reminder email to help make sure everything's still connected.</li>
+    </ul>
+    <p>Your data is kept confidential and used only for this research study. You can close this window now — we'll be in touch by email.</p>
+
+    <h2 class="lang-label">Français</h2>
+    <p>Votre compte Google Santé est maintenant connecté à Partner Step. Voici ce qui se passera ensuite&nbsp;:</p>
+    <ul>
+      <li>Nous vérifions régulièrement votre nombre de pas tout au long de la journée.</li>
+      <li>Veuillez vous assurer que l'application Google Santé sur votre téléphone se synchronise bien avec votre appareil (montre, traqueur, etc.) — nous ne pouvons voir que les données déjà transmises à Google Santé.</li>
+      <li>Chaque semaine, vous recevrez un courriel avec un objectif de pas personnalisé basé sur votre activité récente.</li>
+      <li>Si nous ne recevons aucune donnée de votre appareil pendant quelques jours, nous vous enverrons un courriel de rappel amical pour vérifier que tout est toujours connecté.</li>
+    </ul>
+    <p>Vos données sont confidentielles et utilisées uniquement pour cette étude de recherche. Vous pouvez fermer cette fenêtre — nous vous contacterons par courriel.</p>
+
+    <div class="footnote">PartnerSteps · Research Institute of the MUHC</div>
   </div>
 </body>
 </html>

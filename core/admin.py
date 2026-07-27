@@ -12,9 +12,9 @@ import json
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 # In your admin.py
-admin.site.site_header = "PartnerStep"
-admin.site.site_title = "PartnerStep"
-admin.site.index_title = "Welcome to PartnerStep Administration"
+admin.site.site_header = "Partner Step T2D"
+admin.site.site_title = "Partner Step T2D"
+admin.site.index_title = "Welcome to Partner Step T2D Administration"
 
 
 ###############

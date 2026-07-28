@@ -9,6 +9,7 @@ from datetime import date, timedelta
 import logging
 from io import StringIO
 from goals.notifications import send_goal_notification, create_email_content
+from django.contrib.admin.views.decorators import staff_member_required
 
 class LogCapture:
     def __init__(self):
@@ -27,6 +28,7 @@ class LogCapture:
         self.log_stream.close()
         return messages
         
+@staff_member_required
 def calculate_weekly_goals(request, participant_id):
     participant = get_object_or_404(Participant, pk=participant_id)
     
@@ -71,6 +73,7 @@ def calculate_weekly_goals(request, participant_id):
     
     return render(request, "admin/popup_result.html", context)
 
+@staff_member_required
 def send_notification_view(request, participant_id):
     try:
         participant = Participant.objects.get(id=participant_id)

@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404, render
 from django.core.mail import send_mail
 from django.http import HttpResponse
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def google_auth_start(request, participant_id):
@@ -83,6 +84,7 @@ def google_callback(request):
     return render(request, "admin/google_success.html", {"participant": participant})
 
 
+@staff_member_required
 def send_auth_link(request, participant_id):
     if request.method != "POST":
         from django.http import HttpResponseNotAllowed

@@ -12,6 +12,7 @@ from django.shortcuts import redirect, get_object_or_404, render
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def google_auth_start(request, participant_id):
@@ -83,17 +84,16 @@ def google_callback(request):
     	return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
     return render(request, "admin/google_success.html", {"participant": participant})
 
-
 @staff_member_required
 def send_auth_link(request, participant_id):
-    if request.method != "POST":
+    if request.method not in ("GET", "POST"):
         from django.http import HttpResponseNotAllowed
-        return HttpResponseNotAllowed(["POST"])
+        return HttpResponseNotAllowed(["GET", "POST"])
     participant = get_object_or_404(Participant, pk=participant_id)
-    
+
     # Build the OAuth start URL
     auth_url = request.build_absolute_uri(f"/oauth/start/{participant.pk}/")
-    
+
     # Bilingual email body
     subject = "Partner Step T2D – Google Health Authorization / Autorisation Google Santé"
     message = (
@@ -120,4 +120,7 @@ def send_auth_link(request, participant_id):
     except Exception as e:
         messages.error(request, f"Failed to send email: {str(e)}")
 
+    next_url = request.GET.get("next") or request.POST.get("next")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
     return redirect(f"/admin/participant/{participant.id}/")

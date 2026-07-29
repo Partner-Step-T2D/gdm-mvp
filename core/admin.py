@@ -40,12 +40,12 @@ class ParticipantButtonMixin:
 
     def authenticate_google_button(self, obj):
         if obj.pk:
-            request = getattr(self, 'request', None)
-            csrf_token = get_token(request) if request else ''
             email = obj.user.email
             return format_html(
-                '''<button type="button" class="button" onclick="if(confirm('Are you sure you want to send the authorization email to {}?')){{fetch('/oauth/send-auth-link/{}/', {{method:'POST', headers:{{'X-CSRFToken':'{}'}}, credentials:'same-origin', redirect:'manual'}}).then(function(){{ location.reload(); }});}}">Send Authorization Link</button>''',
-                email, obj.pk, csrf_token
+                '<a class="button" href="/oauth/send-auth-link/{}/" '
+                'onclick="return confirm(\'Are you sure you want to send the authorization email to {}?\');">'
+                'Send Authorization Link</a>',
+                obj.pk, email
             )
         return "Save participant first"
     authenticate_google_button.short_description = "Google Authentication"

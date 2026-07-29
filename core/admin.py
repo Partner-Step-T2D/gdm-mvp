@@ -200,11 +200,10 @@ class CustomUserAdmin(DefaultUserAdmin):
     model = CustomUser
     
     # Disable the top “Start typing to filter” box
-    search_fields = []  # make sure it’s empty
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name')}),
+        ('Personal info', {'fields': ('backup_email',)}),
         ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
@@ -214,14 +213,14 @@ class CustomUserAdmin(DefaultUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_staff', 'is_active'),
+            'fields': ('email', 'backup_email', 'password1', 'password2', 'is_staff', 'is_active'),
         }),
     )
     
     ordering = ('email',)
     list_display = ('email', 'participant_start_date', 'is_active', 'is_staff')
     #list_filter = ('is_active', 'is_staff', 'is_superuser', 'participant__start_date', 'participant__device_type')
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ('email',)
     inlines = [ParticipantInline]
 
     def participant_email(self, obj):
@@ -254,8 +253,8 @@ class CustomUserAdmin(DefaultUserAdmin):
         if request.user.groups.filter(name='Managers').exists() and not request.user.is_superuser:
             return (
                 (None, {
-                    'fields': ('email', 'password'),
-                }),
+                    'fields': ('email', 'password')}),
+                    ('Personal info', {'fields': ('backup_email',)}),
             )
 
         # Superusers and others: full fieldsets

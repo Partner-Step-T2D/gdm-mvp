@@ -31,6 +31,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
+    backup_email = EncryptedTextField(null=True, blank=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -90,7 +91,6 @@ class Participant(models.Model):
     
     google_access_token = EncryptedTextField(null=True, blank=True)
     google_refresh_token = EncryptedTextField(null=True, blank=True)
-    backup_email = EncryptedTextField(null=True, blank=True)
     
     google_token_expires = models.DateTimeField(null=True, blank=True)
     

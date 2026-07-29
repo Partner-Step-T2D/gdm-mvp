@@ -11,10 +11,11 @@ class CustomUserCreationForm(forms.ModelForm):
     """
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+    backup_email = forms.EmailField(required=False, label="Backup Email")
     
     class Meta:
         model = CustomUser
-        fields = ('email', 'first_name', 'last_name')
+        fields = ('email', 'backup_email')
     
     def clean_password2(self):
         # Check that the two password entries match
@@ -46,7 +47,8 @@ class CustomUserChangeForm(forms.ModelForm):
             '<a href="../password/">this form</a>.'
         ),
     )
+    backup_email = forms.EmailField(required=False, label="Backup Email")
     
     class Meta:
         model = CustomUser
-        fields = ('email', 'password', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser')
+        fields = ('email', 'password', 'backup_email', 'is_active', 'is_staff', 'is_superuser')

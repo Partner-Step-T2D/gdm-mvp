@@ -101,8 +101,8 @@ def send_auth_link(request, participant_id):
         f"{auth_url}\n\n"
         "Veuillez suivre ce lien pour initier le processus d'autorisation Google Santé :\n"
         f"{auth_url}\n\n"
-        "Thank you,\nThe Partner Steps Team\n\n"
-        "Merci,\nL'équipe Partner Steps"
+        "Thank you,\nThe Partner Step T2D Team\n\n"
+        "Merci,\nL'équipe Partner Step T2D"
     )
 
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'partnersteprimuhc@gmail.com')

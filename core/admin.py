@@ -6,6 +6,7 @@ from device_integration.fitbit import fetch_fitbit_data_for_participant
 from core.models import Participant, CustomUser
 from django.urls import reverse
 from django.utils import timezone
+from django.middleware.csrf import get_token
 import json
 
 # Import your custom forms
@@ -39,8 +40,12 @@ class ParticipantButtonMixin:
 
     def authenticate_google_button(self, obj):
         if obj.pk:
+            request = getattr(self, 'request', None)
+            csrf_token = get_token(request) if request else ''
+            email = obj.user.email
             return format_html(
-                '<a class="button" href="/oauth/start/{}/" target="_blank">Authenticate Google</a>', obj.pk
+                '''<button type="button" class="button" onclick="if(confirm('Are you sure you want to send the authorization email to {}?')){{fetch('/oauth/send-auth-link/{}/', {{method:'POST', headers:{{'X-CSRFToken':'{}'}}, credentials:'same-origin'}}).then(function(){{ location.reload(); }});}}">Send Authorization Link</button>''',
+                email, obj.pk, csrf_token
             )
         return "Save participant first"
     authenticate_google_button.short_description = "Google Authentication"

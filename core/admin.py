@@ -13,24 +13,22 @@ from django.template.response import TemplateResponse
 from django_otp.conf import settings as otp_settings
 from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as BaseTOTPDeviceAdmin
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as DefaultTOTPDeviceAdmin
 from django_otp.plugins.otp_static.models import StaticDevice
 from django_otp.plugins.otp_static.admin import StaticDeviceAdmin as DefaultStaticDeviceAdmin
-
 import json
 
 # Import your custom forms
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 from django_otp.admin import OTPAdminSite
-
 admin.site.__class__ = OTPAdminSite
 
 admin.site.site_header = "Partner Step T2D"
 admin.site.site_title = "Partner Step T2D"
 admin.site.index_title = "Welcome to Partner Step T2D Administration"
 
-### Restrict Managers to only see their own TOTP codes
+
+### Restrict Managers to only see their own OTP devices
 class OwnDeviceOnlyMixin:
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -54,8 +52,25 @@ class OwnDeviceOnlyMixin:
         return super().has_delete_permission(request, obj)
 
 
-class RestrictedTOTPDeviceAdmin(OwnDeviceOnlyMixin, DefaultTOTPDeviceAdmin):
-    pass
+class RestrictedTOTPDeviceAdmin(OwnDeviceOnlyMixin, BaseTOTPDeviceAdmin):
+    """Own-device-only TOTP admin, including the manual-key config view
+    for setting up authenticators that can't scan a QR code."""
+
+    def config_view(self, request, pk):
+        if otp_settings.OTP_ADMIN_HIDE_SENSITIVE_DATA:
+            raise PermissionDenied()
+        device = TOTPDevice.objects.get(pk=pk)
+        if not self.has_view_or_change_permission(request, device):
+            raise PermissionDenied()
+        # Base32 secret, grouped into 4-character blocks for easy manual typing.
+        raw_secret = b32encode(device.bin_key).decode()
+        manual_key = ' '.join(raw_secret[i:i + 4] for i in range(0, len(raw_secret), 4))
+        context = dict(
+            self.admin_site.each_context(request),
+            device=device,
+            manual_key=manual_key,
+        )
+        return TemplateResponse(request, 'otp_totp/admin/config.html', context)
 
 
 class RestrictedStaticDeviceAdmin(OwnDeviceOnlyMixin, DefaultStaticDeviceAdmin):
@@ -67,30 +82,6 @@ admin.site.register(TOTPDevice, RestrictedTOTPDeviceAdmin)
 admin.site.unregister(StaticDevice)
 admin.site.register(StaticDevice, RestrictedStaticDeviceAdmin)
 
-### Custom One Time Password OTP display
-class TOTPDeviceAdmin(BaseTOTPDeviceAdmin):
-    def config_view(self, request, pk):
-        if otp_settings.OTP_ADMIN_HIDE_SENSITIVE_DATA:
-            raise PermissionDenied()
-
-        device = TOTPDevice.objects.get(pk=pk)
-        if not self.has_view_or_change_permission(request, device):
-            raise PermissionDenied()
-
-        # Base32 secret, grouped into 4-character blocks for easy manual typing.
-        raw_secret = b32encode(device.bin_key).decode()
-        manual_key = ' '.join(raw_secret[i:i + 4] for i in range(0, len(raw_secret), 4))
-
-        context = dict(
-            self.admin_site.each_context(request),
-            device=device,
-            manual_key=manual_key,
-        )
-        return TemplateResponse(request, 'otp_totp/admin/config.html', context)
-
-
-admin.site.unregister(TOTPDevice)
-admin.site.register(TOTPDevice, TOTPDeviceAdmin)
 
 ###############
 # Mixin with shared button methods
@@ -130,20 +121,20 @@ class ParticipantButtonMixin:
         """Button to send goal notification - only enabled if recent goals exist"""
         if not obj.pk:
             return "Save participant first"
-        
+
         from datetime import date, timedelta
-        
+
         # Check if there's a goal from today or yesterday
         today = date.today()
         yesterday = today - timedelta(days=1)
-        
+
         today_key = today.strftime("%Y-%m-%d")
         yesterday_key = yesterday.strftime("%Y-%m-%d")
-        
+
         targets = obj.targets or {}
         recent_goal = None
         goal_date = None
-        
+
         # Check today first, then yesterday
         if today_key in targets and targets[today_key].get('new_target'):
             recent_goal = targets[today_key]
@@ -151,22 +142,20 @@ class ParticipantButtonMixin:
         elif yesterday_key in targets and targets[yesterday_key].get('new_target'):
             recent_goal = targets[yesterday_key]
             goal_date = yesterday_key
-        
+
         if recent_goal:
             url = reverse("goals:send_notification", args=[obj.pk])
             return format_html(
-                '<a class="button" href="{}" target="_blank">Send Notification ({})</a>', 
+                '<a class="button" href="{}" target="_blank">Send Notification ({})</a>',
                 url, goal_date
             )
         else:
             return format_html(
                 '<span style="color: #666; font-style: italic;">No recent goals to notify about</span>'
             )
-
     send_notification_button.short_description = "Send Goal Notification"
 
-###############
-# Inline for Participant
+
 ###############
 # Inline for Participant
 class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
@@ -190,7 +179,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'google_refresh_token',
         'google_token_expires',
     ]
-    
+
     def get_readonly_fields(self, request, obj=None):
         # Save the request object for use in display methods
         self.request = request
@@ -204,7 +193,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             data = json.loads(value) if isinstance(value, str) else value
         except Exception:
             return value
-        
+
         if isinstance(data, list):
             # reverse list for Managers
             data = list(reversed(data))
@@ -228,7 +217,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'language',
             'treatment_arm',
         ]
-        
+
         # Data fields - different for Managers vs Superusers
         if request.user.groups.filter(name="Managers").exists() and not request.user.is_superuser:
             # Managers see read-only display versions
@@ -236,7 +225,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         else:
             # Superusers see editable versions
             data_fields = ['daily_steps', 'targets']
-        
+
         # Technical fields (always readonly)
         tech_fields = [
             'google_access_token',
@@ -273,14 +262,15 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         else:
             return obj.targets
 
+
 ###############
 # Custom User Admin
 class CustomUserAdmin(DefaultUserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = CustomUser
-    
-    # Disable the top “Start typing to filter” box
+
+    # Disable the top "Start typing to filter" box
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -290,14 +280,14 @@ class CustomUserAdmin(DefaultUserAdmin):
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
-    
+
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('email', 'backup_email', 'password1', 'password2', 'is_staff', 'is_active'),
         }),
     )
-    
+
     ordering = ('email',)
     list_display = ('email', 'participant_start_date', 'is_active', 'is_staff')
     #list_filter = ('is_active', 'is_staff', 'is_superuser', 'participant__start_date', 'participant__device_type')
@@ -310,7 +300,7 @@ class CustomUserAdmin(DefaultUserAdmin):
         except:
             return "-"
     participant_email.short_description = "Email"
-    
+
     def participant_start_date(self, obj):
         try:
             return obj.participant.start_date
@@ -340,7 +330,7 @@ class CustomUserAdmin(DefaultUserAdmin):
 
         # Superusers and others: full fieldsets
         return self.fieldsets
-    
+
     def get_form(self, request, obj=None, **kwargs):
         """
         Use CustomUserCreationForm when adding, CustomUserChangeForm when editing.
@@ -352,6 +342,7 @@ class CustomUserAdmin(DefaultUserAdmin):
             defaults['form'] = self.form
         defaults.update(kwargs)
         return super().get_form(request, obj, **defaults)
+
 
 ###############
 # Register the custom User admin

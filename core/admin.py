@@ -13,6 +13,9 @@ from django.template.response import TemplateResponse
 from django_otp.conf import settings as otp_settings
 from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as BaseTOTPDeviceAdmin
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as DefaultTOTPDeviceAdmin
+from django_otp.plugins.otp_static.models import StaticDevice
+from django_otp.plugins.otp_static.admin import StaticDeviceAdmin as DefaultStaticDeviceAdmin
 
 import json
 
@@ -23,10 +26,46 @@ from django_otp.admin import OTPAdminSite
 
 admin.site.__class__ = OTPAdminSite
 
-# In your admin.py
 admin.site.site_header = "Partner Step T2D"
 admin.site.site_title = "Partner Step T2D"
 admin.site.index_title = "Welcome to Partner Step T2D Administration"
+
+### Restrict Managers to only see their own TOTP codes
+class OwnDeviceOnlyMixin:
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(user=request.user)
+
+    def has_view_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.user_id == request.user.id
+        return super().has_view_permission(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.user_id == request.user.id
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.user_id == request.user.id
+        return super().has_delete_permission(request, obj)
+
+
+class RestrictedTOTPDeviceAdmin(OwnDeviceOnlyMixin, DefaultTOTPDeviceAdmin):
+    pass
+
+
+class RestrictedStaticDeviceAdmin(OwnDeviceOnlyMixin, DefaultStaticDeviceAdmin):
+    pass
+
+
+admin.site.unregister(TOTPDevice)
+admin.site.register(TOTPDevice, RestrictedTOTPDeviceAdmin)
+admin.site.unregister(StaticDevice)
+admin.site.register(StaticDevice, RestrictedStaticDeviceAdmin)
 
 ### Custom One Time Password OTP display
 class TOTPDeviceAdmin(BaseTOTPDeviceAdmin):

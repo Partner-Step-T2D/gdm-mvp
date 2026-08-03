@@ -21,3 +21,5 @@ settings_local.py
 *.csv
 *.json
 .DS_Store
+venv_py39_backup/
+venv/

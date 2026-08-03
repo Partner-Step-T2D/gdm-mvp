@@ -89,6 +89,9 @@ class Participant(models.Model):
     fitbit_token_expires = models.DateTimeField(null=True, blank=True)
     fitbit_auth_token = models.UUIDField(default=uuid.uuid4, unique=True)
     
+    google_oauth_state = models.CharField(max_length=64, null=True, blank=True)
+    google_oauth_state_expires = models.DateTimeField(null=True, blank=True)
+    
     google_access_token = EncryptedTextField(null=True, blank=True)
     google_refresh_token = EncryptedTextField(null=True, blank=True)
     

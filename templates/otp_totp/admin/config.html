@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Set up {{ device.name }}</h1>
+
+<p>Scan this QR code with an authenticator app:</p>
+<img src="{% url 'admin:otp_totp_totpdevice_qrcode' device.pk %}" alt="QR code">
+
+<p>Or, if you're on a laptop with no camera handy, enter this key manually
+   (choose "manual entry" or "can't scan" in your authenticator app):</p>
+<p style="font-family: monospace; font-size: 1.3em; letter-spacing: 1px;">
+  {{ manual_key }}
+</p>
+{% endblock %}

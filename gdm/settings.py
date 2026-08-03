@@ -58,7 +58,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'app.partnersteps.ca',
-    'gdm-mvp.onrender.com',  # keep during transition
 ]
 
 # Security settings
@@ -78,10 +77,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
     'core',
     'goals',
     'device_integration',
-    #'auth_app.CustomAuthConfig',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -90,10 +92,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'gdm.urls'
@@ -136,6 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 15},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -145,6 +149,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.5  # hours (30 minutes)
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

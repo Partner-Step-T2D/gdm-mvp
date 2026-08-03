@@ -13,10 +13,16 @@ from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.http import url_has_allowed_host_and_scheme
-
+import secrets
 
 def google_auth_start(request, participant_id):
     participant = get_object_or_404(Participant, pk=participant_id)
+
+    state = secrets.token_urlsafe(32)
+    participant.google_oauth_state = state
+    participant.google_oauth_state_expires = timezone.now() + timedelta(minutes=30)
+    participant.save(update_fields=["google_oauth_state", "google_oauth_state_expires"])
+
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": settings.GOOGLE_REDIRECT_URI,
@@ -24,25 +30,32 @@ def google_auth_start(request, participant_id):
         "scope": "https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly openid email",
         "access_type": "offline",
         "prompt": "consent",
-        "state": str(participant.fitbit_auth_token),
+        "state": state,
         "login_hint": participant.user.email,
     }
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
     return redirect(url)
-
 
 def google_callback(request):
     code = request.GET.get("code")
     state = request.GET.get("state")
     error = request.GET.get("error")
 
-    if error or not code:
+    if error or not code or not state:
         return redirect("/admin/")
 
     try:
-        participant = Participant.objects.get(fitbit_auth_token=state)
+        participant = Participant.objects.get(google_oauth_state=state)
     except Participant.DoesNotExist:
         return redirect("/admin/")
+
+    if not participant.google_oauth_state_expires or participant.google_oauth_state_expires < timezone.now():
+        return redirect("/admin/?error=link_expired")
+
+    # Single-use: clear immediately so this value can never be replayed.
+    participant.google_oauth_state = None
+    participant.google_oauth_state_expires = None
+    participant.save(update_fields=["google_oauth_state", "google_oauth_state_expires"])
 
     # Exchange code for tokens
     token_resp = requests.post(

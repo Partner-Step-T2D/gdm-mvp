@@ -7,16 +7,51 @@ from core.models import Participant, CustomUser
 from django.urls import reverse
 from django.utils import timezone
 from urllib.parse import quote
+from base64 import b32encode
+from django.core.exceptions import PermissionDenied
+from django.template.response import TemplateResponse
+from django_otp.conf import settings as otp_settings
+from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as BaseTOTPDeviceAdmin
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
 import json
 
 # Import your custom forms
 from .forms import CustomUserCreationForm, CustomUserChangeForm
+
+from django_otp.admin import OTPAdminSite
+
+admin.site.__class__ = OTPAdminSite
 
 # In your admin.py
 admin.site.site_header = "Partner Step T2D"
 admin.site.site_title = "Partner Step T2D"
 admin.site.index_title = "Welcome to Partner Step T2D Administration"
 
+### Custom One Time Password OTP display
+class TOTPDeviceAdmin(BaseTOTPDeviceAdmin):
+    def config_view(self, request, pk):
+        if otp_settings.OTP_ADMIN_HIDE_SENSITIVE_DATA:
+            raise PermissionDenied()
+
+        device = TOTPDevice.objects.get(pk=pk)
+        if not self.has_view_or_change_permission(request, device):
+            raise PermissionDenied()
+
+        # Base32 secret, grouped into 4-character blocks for easy manual typing.
+        raw_secret = b32encode(device.bin_key).decode()
+        manual_key = ' '.join(raw_secret[i:i + 4] for i in range(0, len(raw_secret), 4))
+
+        context = dict(
+            self.admin_site.each_context(request),
+            device=device,
+            manual_key=manual_key,
+        )
+        return TemplateResponse(request, 'otp_totp/admin/config.html', context)
+
+
+admin.site.unregister(TOTPDevice)
+admin.site.register(TOTPDevice, TOTPDeviceAdmin)
 
 ###############
 # Mixin with shared button methods

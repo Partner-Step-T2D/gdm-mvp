@@ -31,10 +31,7 @@ class LogCapture:
 @staff_member_required
 def calculate_weekly_goals(request, participant_id):
     participant = get_object_or_404(Participant, pk=participant_id)
-    
-    # Test if we can capture anything
-    print("DEBUG: About to call run_weekly_algorithm")
-    
+        
     # Create capture setup
     log_capture_string = StringIO()
     capture_handler = logging.StreamHandler(log_capture_string)
@@ -43,8 +40,6 @@ def calculate_weekly_goals(request, participant_id):
     
     # Get logger
     targets_logger = logging.getLogger('goals.targets')
-    print(f"DEBUG: Logger level: {targets_logger.level}")
-    print(f"DEBUG: Logger handlers: {targets_logger.handlers}")
     
     # Add our handler
     targets_logger.addHandler(capture_handler)
@@ -53,12 +48,9 @@ def calculate_weekly_goals(request, participant_id):
     try:
         
         result = run_weekly_algorithm(participant)
-        print("DEBUG: run_weekly_algorithm completed")
         
         # Get captured content
         log_contents = log_capture_string.getvalue()
-        print(f"DEBUG: Captured content length: {len(log_contents)}")
-        print(f"DEBUG: Captured content: '{log_contents}'")
         
         context = {
             "success": True if result else False,

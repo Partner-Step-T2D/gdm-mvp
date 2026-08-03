@@ -315,7 +315,7 @@ class CustomUserAdmin(DefaultUserAdmin):
                 return (
                     (None, {
                         'classes': ('wide',),
-                        'fields': ('email', 'password1', 'password2', 'is_active'),
+                        'fields': ('email', 'password1', 'password2', 'is_active', 'is_staff'),
                     }),
                 )
             return self.add_fieldsets
@@ -326,6 +326,7 @@ class CustomUserAdmin(DefaultUserAdmin):
                 (None, {
                     'fields': ('email', 'password')}),
                     ('Personal info', {'fields': ('backup_email',)}),
+                    ('Permissions', {'fields': ('is_active', 'is_staff')}),
             )
 
         # Superusers and others: full fieldsets

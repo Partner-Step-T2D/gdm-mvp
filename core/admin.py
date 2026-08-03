@@ -64,7 +64,7 @@ class RestrictedTOTPDeviceAdmin(OwnDeviceOnlyMixin, BaseTOTPDeviceAdmin):
             raise PermissionDenied()
         # Base32 secret, grouped into 4-character blocks for easy manual typing.
         raw_secret = b32encode(device.bin_key).decode()
-        manual_key = ' '.join(raw_secret[i:i + 4] for i in range(0, len(raw_secret), 4))
+        manual_key = raw_secret
         context = dict(
             self.admin_site.each_context(request),
             device=device,

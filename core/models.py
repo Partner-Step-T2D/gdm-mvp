@@ -84,8 +84,8 @@ class Participant(models.Model):
     	help_text="Required: Participant's Fitbit User ID (6 characters, found in Fitbit app: You > Edit Profile)"
 	)
 
-    fitbit_access_token = models.TextField(null=True, blank=True)
-    fitbit_refresh_token = models.TextField(null=True, blank=True)
+    fitbit_access_token = EncryptedTextField(null=True, blank=True)
+    fitbit_refresh_token = EncryptedTextField(null=True, blank=True)
     fitbit_token_expires = models.DateTimeField(null=True, blank=True)
     fitbit_auth_token = models.UUIDField(default=uuid.uuid4, unique=True)
     

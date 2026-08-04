@@ -2,7 +2,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.utils.html import format_html, format_html_join
-from device_integration.fitbit import fetch_fitbit_data_for_participant
 from core.models import Participant, CustomUser
 from django.urls import reverse
 from django.utils import timezone
@@ -94,14 +93,14 @@ class ParticipantButtonMixin:
             )
         return "Save participant first"
 
-    def fetch_fitbit_data_button(self, obj):
+    def fetch_step_data_button(self, obj):
         if obj.pk:
             url = reverse("device_integration:fetch_step_data", args=[obj.pk])
             return format_html(
                 '<a class="button" href="{}" target="_blank">Fetch Step Data</a>', url
             )
         return "Save participant first"
-    fetch_fitbit_data_button.short_description = "Fetch Step Data"
+    fetch_step_data_button.short_description = "Fetch Step Data"
 
     def authenticate_google_button(self, obj):
         if obj.pk:
@@ -169,11 +168,9 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'daily_steps_display',
         'targets_display',
         'authenticate_google_button',
-        'fetch_fitbit_data_button',
+        'fetch_step_data_button',
         'calculate_weekly_goals_button',
         'send_notification_button',
-        'fitbit_token_expires',
-        'fitbit_auth_token',
         'device_type',
         'google_access_token',
         'google_refresh_token',
@@ -231,14 +228,12 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'google_access_token',
             'google_refresh_token',
             'google_token_expires',
-            'fitbit_token_expires',
-            'fitbit_auth_token',
             'device_type',
         ]
 
         button_fields = [
             'authenticate_google_button',
-            'fetch_fitbit_data_button',
+            'fetch_step_data_button',
             'calculate_weekly_goals_button',
             'send_notification_button',
         ]

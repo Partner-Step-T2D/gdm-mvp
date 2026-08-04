@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from core.models import Participant
-from device_integration.fitbit import fetch_fitbit_data_for_participant, _log_status_flag
+from device_integration.fitbit import _log_status_flag
 from device_integration.google_health import fetch_google_data_for_participant
 import logging
 
@@ -45,9 +45,8 @@ class Command(BaseCommand):
         invalid_token_participants = []
         
         for participant in all_participants:
-            token = participant.fitbit_access_token
             google_token = participant.google_access_token
-            if (not token or not token.strip()) and (not google_token or not google_token.strip()):
+            if not google_token or not google_token.strip():
                 invalid_token_participants.append(participant)
                 _log_status_flag(
                     participant,
@@ -107,18 +106,10 @@ class Command(BaseCommand):
     def fetch_for_participant(self, participant, force=False):
         """Fetch data for a single participant and return success status"""
         try:
-            if participant.google_access_token:
-                # Clear any stale Fitbit error flags
-                _log_status_flag(participant, "fetch_fitbit_data_fail")
-                result, status = fetch_google_data_for_participant(
-                    participant.id,
-                    force_refetch=force
-                )
-            else:
-                result, status = fetch_fitbit_data_for_participant(
-                    participant.id,
-                    force_refetch=force
-                )
+            result, status = fetch_google_data_for_participant(
+                participant.id,
+                force_refetch=force
+            )
 
             if status == 200:
                 steps_count = len(result.get('steps', []))

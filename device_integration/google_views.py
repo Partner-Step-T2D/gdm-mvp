@@ -67,6 +67,7 @@ def google_callback(request):
             "redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "grant_type": "authorization_code",
         },
+        timeout=10,
     )
 
     if token_resp.status_code != 200:
@@ -77,7 +78,8 @@ def google_callback(request):
     # Verify Google identity matches participant's email
     userinfo_resp = requests.get(
         "https://www.googleapis.com/oauth2/v3/userinfo",
-        headers={"Authorization": f"Bearer {tokens['access_token']}"}
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        timeout=10,
     )
 
     if userinfo_resp.status_code != 200:

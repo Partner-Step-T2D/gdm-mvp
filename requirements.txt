@@ -2,7 +2,7 @@ asgiref==3.9.1
 cachetools==5.5.2
 certifi==2025.7.14
 charset-normalizer==3.4.2
-cryptography==49.0.0
+cryptography==50.0.0
 dj-database-url==3.0.1
 Django==4.2.30
 django-axes==8.3.1

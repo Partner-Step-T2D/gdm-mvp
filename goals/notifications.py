@@ -1,6 +1,6 @@
 # goals/notifications.py
 import random
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 import logging
 from django.utils import timezone
@@ -208,19 +208,26 @@ def send_goal_notification(participant, goal_data):
         
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'john.dowling@rimuhc.ca')
         recipient_email = participant.user.email
-        
+
+        # Participant's own backup email (encrypted at rest) is CC'd directly on their notification
+        backup_email = participant.user.backup_email
+        participant_cc = [backup_email] if backup_email else []
+
         # ✅ Get CC list from settings, or default to empty
         cc_list = getattr(settings, 'GOAL_NOTIFICATION_CC', [])
 
         try:
-            send_mail(
+            email = EmailMessage(
                 subject=subject,
-                message=message_body,
+                body=message_body,
                 from_email=from_email,
-                recipient_list=[recipient_email],
-                fail_silently=False,
+                to=[recipient_email],
+                cc=participant_cc,
             )
-            
+            email.send(fail_silently=False)
+            if participant_cc:
+                logger.info(f"Goal notification for {recipient_email} CC'd to backup email")
+
             # ✅ Send a separate copy to CC addresses if any
             if cc_list:
                 cc_subject = f"[CC] {subject} — {recipient_email}"

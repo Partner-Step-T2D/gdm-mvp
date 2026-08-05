@@ -396,7 +396,7 @@ class Command(BaseCommand):
     
     def send_participant_notification(self, participant, consecutive_missing_days):
         """Send email notification to participant about missing data."""
-        from django.core.mail import send_mail
+        from django.core.mail import EmailMessage
 
         language = participant.language or 'en'  # Default to English if None
         if language == 'fr':
@@ -448,15 +448,18 @@ The Research Team
 """
 
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'john.dowling@rimuhc.ca')
+        backup_email = participant.user.backup_email
+        participant_cc = [backup_email] if backup_email else []
 
         try:
-            send_mail(
+            email = EmailMessage(
                 subject=subject,
-                message=message,
+                body=message,
                 from_email=from_email,
-                recipient_list=[participant.user.email],
-                fail_silently=False,
+                to=[participant.user.email],
+                cc=participant_cc,
             )
+            email.send(fail_silently=False)
             logger.info(f"Sent participant sync notification to {participant.user.email}")
             return {'success': True, 'error_message': None}
         except Exception as e:

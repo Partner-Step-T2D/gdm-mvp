@@ -17,6 +17,22 @@ import dj_database_url
 
 import os
 
+from csp.constants import NONE, SELF, UNSAFE_INLINE
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "script-src": [SELF, UNSAFE_INLINE],
+        "style-src": [SELF, UNSAFE_INLINE],
+        "img-src": [SELF, "data:"],
+        "font-src": [SELF],
+        "form-action": [SELF],
+        "frame-ancestors": [SELF],
+        "base-uri": [SELF],
+        "object-src": [NONE],
+    }
+}
+
 ADMIN_NOTIFICATION_EMAIL = [
     'john.dowling@rimuhc.ca',
     'partnerstept2d@muhc.mcgill.ca'
@@ -87,6 +103,7 @@ INSTALLED_APPS = [
     'goals',
     'device_integration',
     'axes',
+    'csp',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +117,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'axes.middleware.AxesMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 
 ROOT_URLCONF = 'gdm.urls'

@@ -109,8 +109,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'core.middleware.SecurityHeadersMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -120,7 +121,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'axes.middleware.AxesMiddleware',
-    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'gdm.urls'

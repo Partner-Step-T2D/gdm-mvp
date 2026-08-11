@@ -19,6 +19,8 @@ import os
 
 from csp.constants import NONE, SELF, UNSAFE_INLINE
 
+WHITENOISE_ALLOW_ALL_ORIGINS = False
+
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
@@ -107,6 +109,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.middleware.SecurityHeadersMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -117,8 +120,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'axes.middleware.AxesMiddleware',
-    "django.middleware.security.SecurityMiddleware",
-    "csp.middleware.CSPMiddleware",
+    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'gdm.urls'

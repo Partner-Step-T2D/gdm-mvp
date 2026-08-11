@@ -3,8 +3,13 @@ from django.contrib import admin
 from django.urls import path, include
 from core.admin_dashboard_views import dashboard_view, participant_detail_view, export_research_data_view
 from django.views.generic import RedirectView
+from django.http import HttpResponse
+
+def robots_txt(request):
+    return HttpResponse("User-agent: *\nDisallow: /\n", content_type="text/plain")
 
 urlpatterns = [
+    path("robots.txt", robots_txt),
     path('admin/dashboard/', dashboard_view, name='admin-dashboard'),
     path('admin/reports/export-research-data/', export_research_data_view, name='export_research_data'),
     path('admin/participant/<int:participant_id>/', participant_detail_view, name='participant_detail'),

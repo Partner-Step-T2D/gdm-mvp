@@ -10,12 +10,22 @@ from datetime import timedelta
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404, render
 from django.core.mail import send_mail
+from django.core import signing
 from django.http import HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.http import url_has_allowed_host_and_scheme
 import secrets
 
-def google_auth_start(request, participant_id):
+
+def google_auth_start(request, token):
+    signer = signing.TimestampSigner()
+    try:
+        participant_id = signer.unsign(token, max_age=60 * 60 * 72)  # 72-hour link expiry
+    except signing.SignatureExpired:
+        return redirect("/admin/?error=link_expired")
+    except signing.BadSignature:
+        return redirect("/admin/?error=invalid_link")
+
     participant = get_object_or_404(Participant, pk=participant_id)
 
     state = secrets.token_urlsafe(32)
@@ -107,7 +117,9 @@ def send_auth_link(request, participant_id):
     participant = get_object_or_404(Participant, pk=participant_id)
 
     # Build the OAuth start URL
-    auth_url = request.build_absolute_uri(f"/oauth/start/{participant.pk}/")
+    signer = signing.TimestampSigner()
+    token = signer.sign(str(participant.pk))
+    auth_url = request.build_absolute_uri(f"/oauth/start/{token}/")
 
     # Bilingual email body
     subject = "Partner Step T2D – Google Health Authorization / Autorisation Google Santé"

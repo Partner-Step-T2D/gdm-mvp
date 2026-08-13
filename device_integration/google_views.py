@@ -110,6 +110,35 @@ def google_callback(request):
     return render(request, "admin/google_success.html", {"participant": participant})
 
 @staff_member_required
+def delete_google_tokens(request, participant_id):
+    if request.method not in ("GET", "POST"):
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(["GET", "POST"])
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    token_to_revoke = participant.google_refresh_token or participant.google_access_token
+    if token_to_revoke:
+        try:
+            requests.post(
+                "https://oauth2.googleapis.com/revoke",
+                params={"token": token_to_revoke},
+                timeout=10,
+            )
+        except requests.RequestException:
+            pass  # Still clear locally even if Google's endpoint is unreachable
+
+    participant.google_access_token = ""
+    participant.google_refresh_token = ""
+    participant.google_token_expires = None
+    participant.save(update_fields=["google_access_token", "google_refresh_token", "google_token_expires"])
+
+    messages.success(request, f"Google access tokens deleted and revoked for {participant.user.email}.")
+
+    next_url = request.GET.get("next") or request.POST.get("next")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
+    return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
+
 def send_auth_link(request, participant_id):
     if request.method not in ("GET", "POST"):
         from django.http import HttpResponseNotAllowed

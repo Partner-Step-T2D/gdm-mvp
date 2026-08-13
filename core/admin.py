@@ -175,6 +175,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'google_access_token',
         'google_refresh_token',
         'google_token_expires',
+        'delete_google_tokens_button',
     ]
 
     def get_readonly_fields(self, request, obj=None):
@@ -228,6 +229,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'google_access_token',
             'google_refresh_token',
             'google_token_expires',
+            'delete_google_tokens_button',
             'device_type',
         ]
 
@@ -256,6 +258,22 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             return format_html("<ul style='margin:0 0 0 1em;'>{}</ul>", formatted)
         else:
             return obj.targets
+    
+    def delete_google_tokens_button(self, obj):
+        if obj.pk and (obj.google_access_token or obj.google_refresh_token):
+            request = getattr(self, 'request', None)
+            email = obj.user.email
+            next_param = quote(request.path) if request else ''
+            return format_html(
+                '<a class="button" style="background:#ba2121;" href="/oauth/delete-tokens/{}/?next={}" '
+                'onclick="return confirm(\'This will revoke Google Health access for {} and delete the stored tokens. Continue?\');">'
+                'Delete Google access tokens</a>',
+                obj.pk, next_param, email
+            )
+        elif obj.pk:
+            return format_html('<span style="color: #666; font-style: italic;">No tokens to delete</span>')
+        return "Save participant first"
+    delete_google_tokens_button.short_description = "Delete Google access tokens"
 
 
 ###############

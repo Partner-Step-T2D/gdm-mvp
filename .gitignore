@@ -23,3 +23,4 @@ settings_local.py
 .DS_Store
 venv_py39_backup/
 venv/
+staticfiles/

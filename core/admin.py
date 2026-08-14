@@ -14,6 +14,7 @@ from django_otp.plugins.otp_totp.admin import TOTPDeviceAdmin as BaseTOTPDeviceA
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
 from django_otp.plugins.otp_static.admin import StaticDeviceAdmin as DefaultStaticDeviceAdmin
+from django.middleware.csrf import get_token
 import json
 
 # Import your custom forms
@@ -101,17 +102,24 @@ class ParticipantButtonMixin:
             )
         return "Save participant first"
     fetch_step_data_button.short_description = "Fetch Step Data"
-
+    
     def authenticate_google_button(self, obj):
         if obj.pk:
             request = getattr(self, 'request', None)
+            if not request:
+                return "-"
             email = obj.user.email
-            next_param = quote(request.path) if request else ''
+            next_param = quote(request.path)
+            token = get_token(request)
             return format_html(
-                '<a class="button" href="/oauth/send-auth-link/{}/?next={}" '
-                'onclick="return confirm(\'Are you sure you want to send the authorization email to {}?\');">'
-                'Send Authorization Link</a>',
-                obj.pk, next_param, email
+                '<button type="button" class="button" onclick="'
+                'if(confirm(\'Are you sure you want to send the authorization email to {}?\')){{'
+                'var f=document.createElement(\'form\');f.method=\'POST\';f.action=\'/oauth/send-auth-link/{}/\';'
+                'var c=document.createElement(\'input\');c.type=\'hidden\';c.name=\'csrfmiddlewaretoken\';c.value=\'{}\';f.appendChild(c);'
+                'var n=document.createElement(\'input\');n.type=\'hidden\';n.name=\'next\';n.value=\'{}\';f.appendChild(n);'
+                'document.body.appendChild(f);f.submit();'
+                '}}">Send Authorization Link</button>',
+                email, obj.pk, token, next_param
             )
         return "Save participant first"
     authenticate_google_button.short_description = "Google Authentication"
@@ -258,23 +266,29 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             return format_html("<ul style='margin:0 0 0 1em;'>{}</ul>", formatted)
         else:
             return obj.targets
-    
+        
     def delete_google_tokens_button(self, obj):
         if obj.pk and (obj.google_access_token or obj.google_refresh_token):
             request = getattr(self, 'request', None)
+            if not request:
+                return "-"
             email = obj.user.email
-            next_param = quote(request.path) if request else ''
+            next_param = quote(request.path)
+            token = get_token(request)
             return format_html(
-                '<a class="button" style="background:#ba2121;" href="/oauth/delete-tokens/{}/?next={}" '
-                'onclick="return confirm(\'This will revoke Google Health access for {} and delete the stored tokens. Continue?\');">'
-                'Delete Google access tokens</a>',
-                obj.pk, next_param, email
+                '<button type="button" class="button" style="background:#ba2121;" onclick="'
+                'if(confirm(\'This will revoke Google Health access for {} and delete the stored tokens. Continue?\')){{'
+                'var f=document.createElement(\'form\');f.method=\'POST\';f.action=\'/oauth/delete-tokens/{}/\';'
+                'var c=document.createElement(\'input\');c.type=\'hidden\';c.name=\'csrfmiddlewaretoken\';c.value=\'{}\';f.appendChild(c);'
+                'var n=document.createElement(\'input\');n.type=\'hidden\';n.name=\'next\';n.value=\'{}\';f.appendChild(n);'
+                'document.body.appendChild(f);f.submit();'
+                '}}">Delete Google access tokens</button>',
+                email, obj.pk, token, next_param
             )
         elif obj.pk:
             return format_html('<span style="color: #666; font-style: italic;">No tokens to delete</span>')
         return "Save participant first"
     delete_google_tokens_button.short_description = "Delete Google access tokens"
-
 
 ###############
 # Custom User Admin
@@ -328,7 +342,7 @@ class CustomUserAdmin(DefaultUserAdmin):
                 return (
                     (None, {
                         'classes': ('wide',),
-                        'fields': ('email', 'password1', 'password2', 'is_active', 'is_staff'),
+                        'fields': ('email', 'password1', 'password2', 'is_active',),
                     }),
                 )
             return self.add_fieldsets
@@ -339,7 +353,7 @@ class CustomUserAdmin(DefaultUserAdmin):
                 (None, {
                     'fields': ('email', 'password')}),
                     ('Personal info', {'fields': ('backup_email',)}),
-                    ('Permissions', {'fields': ('is_active', 'is_staff')}),
+                    ('Permissions', {'fields': ('is_active',)}),
             )
 
         # Superusers and others: full fieldsets

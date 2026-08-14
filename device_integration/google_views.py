@@ -20,7 +20,7 @@ import secrets
 def google_auth_start(request, token):
     signer = signing.TimestampSigner()
     try:
-        participant_id = signer.unsign(token, max_age=60 * 60 * 72)  # 72-hour link expiry
+        participant_id = signer.unsign(token, max_age=60 * 60 * 24)  # 24-hour link expiry
     except signing.SignatureExpired:
         return redirect("/admin/?error=link_expired")
     except signing.BadSignature:
@@ -111,9 +111,9 @@ def google_callback(request):
 
 @staff_member_required
 def delete_google_tokens(request, participant_id):
-    if request.method not in ("GET", "POST"):
+    if request.method != "POST":
         from django.http import HttpResponseNotAllowed
-        return HttpResponseNotAllowed(["GET", "POST"])
+        return HttpResponseNotAllowed(["POST"])
     participant = get_object_or_404(Participant, pk=participant_id)
 
     token_to_revoke = participant.google_refresh_token or participant.google_access_token
@@ -134,15 +134,16 @@ def delete_google_tokens(request, participant_id):
 
     messages.success(request, f"Google access tokens deleted and revoked for {participant.user.email}.")
 
-    next_url = request.GET.get("next") or request.POST.get("next")
+    next_url = request.POST.get("next")
     if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         return redirect(next_url)
     return redirect(f"/admin/core/customuser/{participant.user.id}/change/")
 
+@staff_member_required
 def send_auth_link(request, participant_id):
-    if request.method not in ("GET", "POST"):
+    if request.method != "POST":
         from django.http import HttpResponseNotAllowed
-        return HttpResponseNotAllowed(["GET", "POST"])
+        return HttpResponseNotAllowed(["POST"])
     participant = get_object_or_404(Participant, pk=participant_id)
 
     # Build the OAuth start URL
@@ -176,7 +177,7 @@ def send_auth_link(request, participant_id):
     except Exception as e:
         messages.error(request, f"Failed to send email: {str(e)}")
 
-    next_url = request.GET.get("next") or request.POST.get("next")
+    next_url = request.POST.get("next")
     if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         return redirect(next_url)
     return redirect(f"/admin/participant/{participant.id}/")

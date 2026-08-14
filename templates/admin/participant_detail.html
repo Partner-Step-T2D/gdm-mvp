@@ -310,7 +310,9 @@
       <p>No daily steps data available to chart.</p>
     {% endif %}
   </div>
-
+{% if participant.daily_steps %}
+      {{ participant.daily_steps|json_script:"daily-steps-data" }}
+    {% endif %}
   <div class="content-section">
     <h2>Weekly Progress Summary</h2>
     {% if weekly_summaries %}
@@ -540,7 +542,7 @@
 
     // Initialize chart data
     {% if participant.daily_steps %}
-      const rawData = {{ participant.daily_steps|safe }};
+      const rawData = JSON.parse(document.getElementById('daily-steps-data').textContent);
       
       // Build data map for quick lookup
       if (Array.isArray(rawData)) {

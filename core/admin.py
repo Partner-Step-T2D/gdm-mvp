@@ -1,5 +1,6 @@
 # core/admin.py
 from django.contrib import admin
+from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.utils.html import format_html, format_html_join
 from core.models import Participant, CustomUser
@@ -155,7 +156,7 @@ class ParticipantButtonMixin:
             return format_html(
                 '<a class="button" href="{}" target="_blank">Send Notification ({})</a>',
                 url, goal_date
-            )
+        )
         else:
             return format_html(
                 '<span style="color: #666; font-style: italic;">No recent goals to notify about</span>'
@@ -252,7 +253,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
     def daily_steps_display(self, obj):
         """Display formatted daily steps for Managers"""
         if getattr(self, 'request', None) and self.request.user.groups.filter(name="Managers").exists() \
-        and not self.request.user.is_superuser:
+            and not self.request.user.is_superuser:
             formatted = self.render_json(obj.daily_steps)
             return format_html("<ul style='margin:0 0 0 1em;'>{}</ul>", formatted)
         else:
@@ -261,7 +262,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
     def targets_display(self, obj):
         """Display formatted targets for Managers"""
         if getattr(self, 'request', None) and self.request.user.groups.filter(name="Managers").exists() \
-        and not self.request.user.is_superuser:
+            and not self.request.user.is_superuser:
             formatted = self.render_json(obj.targets)
             return format_html("<ul style='margin:0 0 0 1em;'>{}</ul>", formatted)
         else:
@@ -311,7 +312,7 @@ class CustomUserAdmin(DefaultUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'backup_email', 'password1', 'password2', 'is_staff', 'is_active'),
+            'fields': ('email', 'backup_email', 'is_staff', 'is_active'),
         }),
     )
 
@@ -336,15 +337,15 @@ class CustomUserAdmin(DefaultUserAdmin):
     participant_start_date.short_description = "Start Date"
 
     def get_fieldsets(self, request, obj=None):
-    # For the add form (obj is None), always use add_fieldsets
+        # For the add form (obj is None), always use add_fieldsets
         if obj is None:
             if request.user.groups.filter(name='Managers').exists() and not request.user.is_superuser:
                 return (
                     (None, {
                         'classes': ('wide',),
                         'fields': ('email', 'password1', 'password2', 'is_active',),
-                    }),
-                )
+                }),
+            )
             return self.add_fieldsets
 
         # For editing, Managers: email + password only
@@ -370,7 +371,20 @@ class CustomUserAdmin(DefaultUserAdmin):
             defaults['form'] = self.form
         defaults.update(kwargs)
         return super().get_form(request, obj, **defaults)
-
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change and hasattr(form, 'generated_password'):
+            self._generated_password_message = (
+            f"Temporary password for {obj.email}: {form.generated_password} "
+            "(valid 48 hours; user must change it on first login)."
+        )
+    
+    def response_add(self, request, obj, post_url_continue=None):
+        msg = getattr(self, '_generated_password_message', None)
+        if msg:
+            messages.success(request, msg)
+        return super().response_add(request, obj, post_url_continue)
 
 ###############
 # Register the custom User admin

@@ -31,11 +31,24 @@ class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     backup_email = EncryptedTextField(null=True, blank=True)
-    
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="If set, the user is forced to change their password before doing anything else."
+    )
+    password_expires_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="If must_change_password is True and this time has passed, the temporary password is no longer valid."
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-    objects = CustomUserManager() 
-    
+    objects = CustomUserManager()
+
+    def set_password(self, raw_password):
+        super().set_password(raw_password)
+        self.must_change_password = False
+        self.password_expires_at = None
+        
 class Participant(models.Model):
     LANGUAGE_CHOICES = [
         ('en', 'English'),

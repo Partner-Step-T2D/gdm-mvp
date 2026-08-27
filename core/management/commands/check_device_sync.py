@@ -435,7 +435,7 @@ We noticed that your Fitbit device hasn't synced data for the past {consecutive_
 To ensure your activity data is being recorded properly, please:
 
 1. Make sure Bluetooth is enabled on your phone
-2. Open the Fitbit app
+2. Open the Google Health app
 3. Wait for your device to sync (you should see a sync animation)
 4. Verify that today's steps are showing in your app
 

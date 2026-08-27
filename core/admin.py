@@ -375,17 +375,18 @@ class CustomUserAdmin(DefaultUserAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if not change and hasattr(form, 'generated_password'):
-            self._generated_password_message = (
-            f"Temporary password for {obj.email}: {form.generated_password} "
-            "(valid 48 hours; user must change it on first login)."
+            request._generated_password_message = (
+                f"Temporary password for {obj.email}: {form.generated_password} "
+                "(valid 48 hours; user must change it on first login)."
         )
     
     def response_add(self, request, obj, post_url_continue=None):
-        msg = getattr(self, '_generated_password_message', None)
+        msg = getattr(request, '_generated_password_message', None)
         if msg:
             messages.success(request, msg)
         return super().response_add(request, obj, post_url_continue)
-
+    
+    
 ###############
 # Register the custom User admin
 admin.site.register(CustomUser, CustomUserAdmin)

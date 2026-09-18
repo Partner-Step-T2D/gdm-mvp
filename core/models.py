@@ -62,6 +62,12 @@ class Participant(models.Model):
     
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     start_date = models.DateField()
+    stopped_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date participation was stopped (end of study or drop-out). Last date step data was captured."
+    )
+    
     treatment_arm = models.IntegerField(
         choices=TREATMENT_ARM_CHOICES,
         help_text="Treatment arm assignment: 0=Control, 1=Intervention"

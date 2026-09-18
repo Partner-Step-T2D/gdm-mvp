@@ -37,3 +37,25 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("#content-main form");
+    const stoppedDateInput = document.querySelector('input[name$="-stopped_date"]');
+
+    if (form && stoppedDateInput) {
+        const initialValue = stoppedDateInput.value;
+
+        form.addEventListener("submit", function (e) {
+            const valueChanged = stoppedDateInput.value !== initialValue;
+            if (stoppedDateInput.value && valueChanged) {
+                const confirmed = confirm(
+                    "You have selected Stopped Date. This will stop data collection and target generation. " +
+                    "This can only be undone by the administrator. Click OK to continue."
+                );
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            }
+        });
+    }
+});

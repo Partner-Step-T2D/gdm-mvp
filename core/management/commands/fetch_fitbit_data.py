@@ -38,7 +38,9 @@ class Command(BaseCommand):
                 )
                 return
         else:
-            all_participants = Participant.objects.select_related('user').all()
+            all_participants = Participant.objects.select_related('user').filter(
+                user__is_active=True
+            )
         
         # Separate participants by token status
         valid_token_participants = []

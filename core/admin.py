@@ -185,12 +185,21 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
         'google_refresh_token',
         'google_token_expires',
         'delete_google_tokens_button',
+        'stop_participation_button',
     ]
 
     def get_readonly_fields(self, request, obj=None):
         # Save the request object for use in display methods
         self.request = request
-        return super().get_readonly_fields(request, obj)
+        readonly = list(self.readonly_fields)
+        if obj:
+            try:
+                participant = obj.participant
+            except Participant.DoesNotExist:
+                participant = None
+            if participant and participant.stopped_date and not request.user.is_superuser:
+                readonly = readonly + ['stopped_date']
+        return readonly
 
     def render_json(self, value):
         """Format JSON data into readable HTML lists"""
@@ -248,7 +257,7 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             'calculate_weekly_goals_button',
             'send_notification_button',
         ]
-        return base_fields + data_fields + button_fields + tech_fields
+        return base_fields + data_fields + button_fields + tech_fields + ['stopped_date']
 
     def daily_steps_display(self, obj):
         """Display formatted daily steps for Managers"""
@@ -290,6 +299,29 @@ class ParticipantInline(ParticipantButtonMixin, admin.StackedInline):
             return format_html('<span style="color: #666; font-style: italic;">No tokens to delete</span>')
         return "Save participant first"
     delete_google_tokens_button.short_description = "Delete Google access tokens"
+
+    def stop_participation_button(self, obj):
+        if obj.pk and not obj.stopped_date:
+            request = getattr(self, 'request', None)
+            if not request:
+                return "-"
+            email = obj.user.email
+            next_param = quote(request.path)
+            token = get_token(request)
+            return format_html(
+                '<button type="button" class="button" style="background:#ba2121;" onclick="'
+                'if(confirm(\'This will mark {} as inactive and record today as their stop date. Continue?\')){{'
+                'var f=document.createElement(\'form\');f.method=\'POST\';f.action=\'/goals/stop-participation/{}/\';'
+                'var c=document.createElement(\'input\');c.type=\'hidden\';c.name=\'csrfmiddlewaretoken\';c.value=\'{}\';f.appendChild(c);'
+                'var n=document.createElement(\'input\');n.type=\'hidden\';n.name=\'next\';n.value=\'{}\';f.appendChild(n);'
+                'document.body.appendChild(f);f.submit();'
+                '}}">Stop Participation</button>',
+                email, obj.pk, token, next_param
+            )
+        elif obj.pk:
+            return format_html('<span style="color: #666; font-style: italic;">Stopped on {}</span>', obj.stopped_date)
+        return "Save participant first"
+    stop_participation_button.short_description = "Stop Participation"
 
 ###############
 # Custom User Admin
@@ -381,10 +413,24 @@ class CustomUserAdmin(DefaultUserAdmin):
         )
     
     def response_add(self, request, obj, post_url_continue=None):
-        msg = getattr(request, '_generated_password_message', None)
-        if msg:
-            messages.success(request, msg)
-        return super().response_add(request, obj, post_url_continue)
+    	msg = getattr(request, '_generated_password_message', None)
+    	if msg:
+    		messages.success(request, msg)
+    	return super().response_add(request, obj, post_url_continue)
+    
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        obj = form.instance
+        try:
+            participant = Participant.objects.get(user=obj)
+        except Participant.DoesNotExist:
+            return
+        if participant.stopped_date and obj.is_active:
+            obj.is_active = False
+            obj.save(update_fields=["is_active"])
+        elif not participant.stopped_date and not obj.is_active:
+            obj.is_active = True
+            obj.save(update_fields=["is_active"])
     
     
 ###############

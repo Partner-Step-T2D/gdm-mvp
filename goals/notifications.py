@@ -119,6 +119,7 @@ def create_email_content(participant, goal_data):
     target_was_met = goal_data.get('target_was_met')
     previous_target = goal_data.get('previous_target')
     
+    
     # Handle insufficient data case
     if average_steps == "insufficient data":
         if language == 'fr':
@@ -140,7 +141,31 @@ def create_email_content(participant, goal_data):
         
         footer = FRENCH_FOOTER if language == 'fr' else ENGLISH_FOOTER
         return subject, "\n".join(message_lines) + footer
-    
+
+    # Special case: weekly average of 10,000+ steps
+    if average_steps >= 10000:
+        if language == 'fr':
+            subject = "Résumé du nombre de pas et nouvel objectif"
+            message_lines = [
+                "Félicitations ! Vous avez atteint l'objectif des 10 000 pas !!",
+                "Pensez-vous pouvoir maintenir ce rythme de marche sur le long terme ? ",
+                "Vous voyez-vous intégrer cette habitude de marche dans votre routine quotidien ?",
+                "Ou bien pensez-vous pouvoir vous lancer le défi de marcher encore un peu plus ? ",
+                "Réfléchissez à ce qui pourrait être un bon objectif pour vous  pour cette semaine: maintenir ce nombre de pas ou continuer à l'augmenter ?"
+            ]
+        else:
+            subject = "Step Count Summary and New Target"
+            message_lines = [
+                "You have reached the 10 000 steps goal !!",
+                "Is this a level of walking that you would see yourself maintaining over time ? ",
+                "Could you see yourself integrating this walking routine in your daily life?",
+                "Or, do you feel that you can challenge yourself to walk a little bit more? ",
+                "Think what would be a good goal for you for this week? Maintain or keep increasing the number of steps?"
+            ]
+
+        footer = FRENCH_FOOTER if language == 'fr' else ENGLISH_FOOTER
+        return subject, "\n".join(message_lines) + footer
+
     # Normal case with valid step data
     if language == 'fr':
         subject = "Résumé du nombre de pas et nouvel objectif"

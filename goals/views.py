@@ -101,7 +101,9 @@ def send_notification_view(request, participant_id):
             subject, message_body = create_email_content(participant, goal_data)
             
             # Try to send notification
-            email_success = send_goal_notification(participant, goal_data)
+            notification_result = send_goal_notification(participant, goal_data)
+            email_success = notification_result['success']
+            email_error = notification_result['error_message']	
             
             # Build detailed log
             detailed_info = f"""Notification for {participant.user.email}
@@ -111,12 +113,12 @@ def send_notification_view(request, participant_id):
 			Message Content:
 			{message_body}
 
-			Status: {'✅ Email sent successfully' if email_success else '⚠️ Message logged but email sending failed'}"""
-            
+			Status: {'✅ Email sent successfully' if email_success else f'⚠️ Message logged but email sending failed: {email_error}'}"""
+
             context = {
                 "success": email_success,
                 "message": f"Notification processed for {participant.user.email}",
-                "error": None if email_success else "Email sending failed - check configuration",
+                "error": None if email_success else email_error,
                 "detailed_log": detailed_info
             }
         else:
@@ -132,3 +134,4 @@ def send_notification_view(request, participant_id):
         }
     
     return render(request, "admin/popup_result.html", context)
+    

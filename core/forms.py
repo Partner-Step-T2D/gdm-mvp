@@ -33,7 +33,7 @@ class CustomUserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
-        
+     
 class CustomUserChangeForm(forms.ModelForm):
     """
     A form for updating users. Includes all the fields on

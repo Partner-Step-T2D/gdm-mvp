@@ -90,11 +90,19 @@ def send_notification_view(request, participant_id):
             goal_date = yesterday_key
         
         if recent_goal:
+            avg_steps = recent_goal.get('average_steps')
+            previous_target = recent_goal.get('previous_target')
+
+            if isinstance(avg_steps, (int, float)) and previous_target:
+                target_was_met = avg_steps >= previous_target
+            else:
+                target_was_met = None
+
             goal_data = {
-                'average_steps': recent_goal.get('average_steps'),
+                'average_steps': avg_steps,
                 'new_target': recent_goal.get('new_target'),
-                'previous_target': recent_goal.get('previous_target'),
-                'target_was_met': recent_goal.get('average_steps', 0) >= recent_goal.get('previous_target', 0) if recent_goal.get('previous_target') else None
+                'previous_target': previous_target,
+                'target_was_met': target_was_met
             }
             
             # Create message content

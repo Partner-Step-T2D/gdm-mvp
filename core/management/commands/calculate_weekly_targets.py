@@ -427,7 +427,7 @@ class Command(BaseCommand):
                 # Save skipped week with previous target
                 targets[today_str] = {
                     'new_target': previous_target,
-                    'average_steps': 'insufficient_data',
+                    'average_steps': 'insufficient data',
                     'previous_target': previous_target,
                     'target_was_met': None,
                     'calculation_method': 'skipped_week',
@@ -440,7 +440,7 @@ class Command(BaseCommand):
                 # Create goal_data for notification
                 goal_data = {
                     'new_target': previous_target,
-                    'average_steps': 'insufficient_data',
+                    'average_steps': 'insufficient data',
                     'target_was_met': None,
                     'previous_target': previous_target
                 }

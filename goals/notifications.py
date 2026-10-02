@@ -95,8 +95,8 @@ ENGLISH_TIP_10K = (
 FRENCH_TIP_10K = (
     "Vous avez atteint 10 000 pas par jour ou plus.\n"
     "C'est un excellent niveau d'activité physique.\n"
-    "L'algorithme n'est pas conçu pour vous pousser beaucoup plus loin que ce niveau.\n"
-    "Si vous descendez légèrement en dessous de 10 000 pas par jour, il vous proposera d'essayer d'ajouter 1 000 pas par jour supplémentaires.\n"
+    "L'algorithme n'est pas conçu pour vous encourager à dépasser largement ce niveau.\n"
+    "Si votre nombre de pas tombe un peu sous le seuil de 10 000 pas par jour, il vous proposera d'essayer d'ajouter 1 000 pas par jour.\n"
     "Si vous vous sentez capable de marcher davantage, n'hésitez pas à le faire !"
 )
 

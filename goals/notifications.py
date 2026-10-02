@@ -172,7 +172,8 @@ def create_email_content(participant, goal_data):
             else:
                 message_lines.append(f"Vous avez fait moins que le but de la semaine dernière qui était {previous_target} pas par jour.")
         
-        message_lines.append(f"Cela signifie que votre objectif pour la semaine prochaine est {new_target} pas par jour.")
+        if average_steps < 10000:
+            message_lines.append(f"Cela signifie que votre objectif pour la semaine prochaine est {new_target} pas par jour.")
         tip = FRENCH_TIP_10K if average_steps >= 10000 else get_random_tip('fr', target_was_met)
         message_lines.append(f"\n{tip}")
         
@@ -186,7 +187,8 @@ def create_email_content(participant, goal_data):
             comparison = "more" if target_was_met else "less"
             message_lines.append(f"This was {comparison} than last week's target of {previous_target} steps per day.")
         
-        message_lines.append(f"Your target for next week is {new_target} steps per day.")
+        if average_steps < 10000:
+            message_lines.append(f"Your target for next week is {new_target} steps per day.")
         tip = ENGLISH_TIP_10K if average_steps >= 10000 else get_random_tip('en', target_was_met)
         message_lines.append(f"\n{tip}")
     

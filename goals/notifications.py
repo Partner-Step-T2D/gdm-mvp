@@ -83,6 +83,23 @@ FRENCH_TIPS_MET = [
   "Bravo ! Vous atteignez vos objectifs."
 ]
 
+# Fixed tip shown instead of a random one when the weekly average is 10,000+ steps
+ENGLISH_TIP_10K = (
+    "You have reached 10,000 steps per day or more.\n"
+    "This is an excellent amount of physical activity.\n"
+    "The algorithm is not designed to push far beyond this level.\n"
+    "If you dip slightly below 10,000 steps/day, it will suggest you try for an additional 1000 steps/day.\n"
+    "If you feel able to walk more, don't hesitate to do so!"
+)
+
+FRENCH_TIP_10K = (
+    "Vous avez atteint 10 000 pas par jour ou plus.\n"
+    "C'est un excellent niveau d'activité physique.\n"
+    "L'algorithme n'est pas conçu pour vous pousser beaucoup plus loin que ce niveau.\n"
+    "Si vous descendez légèrement en dessous de 10 000 pas par jour, il vous proposera d'essayer d'ajouter 1 000 pas par jour supplémentaires.\n"
+    "Si vous vous sentez capable de marcher davantage, n'hésitez pas à le faire !"
+)
+
 # Contact footers
 ENGLISH_FOOTER = "\n\nIf you would like to contact a member of the research team, please email us at partnerstept2d@muhc.mcgill.ca or call us at 438-346-0479"
 FRENCH_FOOTER = "\n\nSi vous souhaitez contacter un membre de l'équipe de recherche, veuillez nous envoyer un courriel à partnerstept2d@muhc.mcgill.ca ou nous appeler au 438-346-0479"
@@ -142,30 +159,6 @@ def create_email_content(participant, goal_data):
         footer = FRENCH_FOOTER if language == 'fr' else ENGLISH_FOOTER
         return subject, "\n".join(message_lines) + footer
 
-    # Special case: weekly average of 10,000+ steps
-    if average_steps >= 10000:
-        if language == 'fr':
-            subject = "Résumé du nombre de pas et nouvel objectif"
-            message_lines = [
-                "Félicitations ! Vous avez atteint l'objectif des 10 000 pas !!",
-                "Pensez-vous pouvoir maintenir ce rythme de marche sur le long terme ? ",
-                "Vous voyez-vous intégrer cette habitude de marche dans votre routine quotidien ?",
-                "Ou bien pensez-vous pouvoir vous lancer le défi de marcher encore un peu plus ? ",
-                "Réfléchissez à ce qui pourrait être un bon objectif pour vous  pour cette semaine: maintenir ce nombre de pas ou continuer à l'augmenter ?"
-            ]
-        else:
-            subject = "Step Count Summary and New Target"
-            message_lines = [
-                "You have reached the 10 000 steps goal !!",
-                "Is this a level of walking that you would see yourself maintaining over time ? ",
-                "Could you see yourself integrating this walking routine in your daily life?",
-                "Or, do you feel that you can challenge yourself to walk a little bit more? ",
-                "Think what would be a good goal for you for this week? Maintain or keep increasing the number of steps?"
-            ]
-
-        footer = FRENCH_FOOTER if language == 'fr' else ENGLISH_FOOTER
-        return subject, "\n".join(message_lines) + footer
-
     # Normal case with valid step data
     if language == 'fr':
         subject = "Résumé du nombre de pas et nouvel objectif"
@@ -180,7 +173,7 @@ def create_email_content(participant, goal_data):
                 message_lines.append(f"Vous avez fait moins que le but de la semaine dernière qui était {previous_target} pas par jour.")
         
         message_lines.append(f"Cela signifie que votre objectif pour la semaine prochaine est {new_target} pas par jour.")
-        tip = get_random_tip('fr', target_was_met)
+        tip = FRENCH_TIP_10K if average_steps >= 10000 else get_random_tip('fr', target_was_met)
         message_lines.append(f"\n{tip}")
         
     else:
@@ -194,7 +187,7 @@ def create_email_content(participant, goal_data):
             message_lines.append(f"This was {comparison} than last week's target of {previous_target} steps per day.")
         
         message_lines.append(f"Your target for next week is {new_target} steps per day.")
-        tip = get_random_tip('en', target_was_met)
+        tip = ENGLISH_TIP_10K if average_steps >= 10000 else get_random_tip('en', target_was_met)
         message_lines.append(f"\n{tip}")
     
     footer = FRENCH_FOOTER if language == 'fr' else ENGLISH_FOOTER

@@ -254,9 +254,10 @@ class Command(BaseCommand):
     
     def calculate_with_fallback(self, participant, skip_notifications=False):
         """
-        Fallback logic when target day has no data by 17:00.
-        - If >= 4 days of data in past 7 days: Calculate from those days
-        - If < 4 days: Skip week, keep previous target
+        Fallback logic when target day has no data by 22:00.
+        The most recent day with data may be incomplete, so it is not counted.
+        - If >= 4 complete days of data: Calculate from those days
+        - If < 4 complete days: Skip week, keep previous target
         """
         result = {
             'status': None,
@@ -291,24 +292,30 @@ class Command(BaseCommand):
                         break
             
             days_count = len(days_with_data)
+            # The most recent day with data may be incomplete and is excluded
+            # from the average, so only the remaining days count as complete
+            complete_days = max(days_count - 1, 0)
             
-            self.stdout.write(f"    Found {days_count} day(s) with data in past 7 days")
+            self.stdout.write(
+                f"    Found {days_count} day(s) with data in past 7 days "
+                f"({complete_days} complete, last day excluded)"
+            )
             
-            if days_count >= 4:
+            if complete_days >= 4:
                 # Sufficient data - calculate from partial week
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"  ✓ {participant.user.email}: Using {days_count} days of data for calculation"
+                        f"  ✓ {participant.user.email}: Using {complete_days} complete days of data for calculation"
                     )
                 )
                 
                 # Call run_weekly_algorithm with fallback mode
-                goal_data = run_weekly_algorithm(participant, use_fallback=True, fallback_days_count=days_count)
+                goal_data = run_weekly_algorithm(participant, use_fallback=True, fallback_days_count=complete_days)
                 
                 if not goal_data:
                     self.stdout.write(
                         self.style.ERROR(
-                            f"    ✗ Failed to calculate target from {days_count} days of data"
+                            f"    ✗ Failed to calculate target from {complete_days} complete days of data"
                         )
                     )
                     result['status'] = 'no_target'
@@ -342,17 +349,17 @@ class Command(BaseCommand):
                     result['error_details'] = 'Target missing calculation_method metadata'
                     return result
                 
-                if saved_target.get('days_with_data') != days_count:
+                if saved_target.get('days_with_data') != complete_days:
                     self.stdout.write(
                         self.style.WARNING(
-                            f"    ⚠ Target saved but days_with_data mismatch (expected {days_count}, got {saved_target.get('days_with_data')})"
+                            f"    ⚠ Target saved but days_with_data mismatch (expected {complete_days}, got {saved_target.get('days_with_data')})"
                         )
                     )
                 
                 # Validation passed
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"  ✓ Target calculated and validated: {goal_data['new_target']} steps/day (partial data from {days_count} days)"
+                        f"  ✓ Target calculated and validated: {goal_data['new_target']} steps/day (partial data from {complete_days} complete days)"
                     )
                 )
                 result['status'] = 'success'
@@ -396,7 +403,7 @@ class Command(BaseCommand):
                 # Insufficient data - skip this week
                 self.stdout.write(
                     self.style.WARNING(
-                        f"  ⚠  {participant.user.email}: Only {days_count} day(s) of data - skipping week, keeping previous target"
+                        f"  ⚠  {participant.user.email}: Only {complete_days} complete day(s) of data - skipping week, keeping previous target"
                     )
                 )
                 
@@ -431,8 +438,8 @@ class Command(BaseCommand):
                     'previous_target': previous_target,
                     'target_was_met': None,
                     'calculation_method': 'skipped_week',
-                    'days_with_data': days_count,
-                    'reason': f'Less than 4 days of data ({days_count} days)'
+                    'days_with_data': complete_days,
+                    'reason': f'Less than 4 complete days of data ({complete_days} days)'
                 }
                 participant.targets = targets
                 participant.save(update_fields=['targets'])
@@ -440,51 +447,4 @@ class Command(BaseCommand):
                 # Create goal_data for notification
                 goal_data = {
                     'new_target': previous_target,
-                    'average_steps': 'insufficient data',
-                    'target_was_met': None,
-                    'previous_target': previous_target
-                }
-                
-                self.stdout.write(
-                    f"    → Week skipped, continuing with target: {previous_target} steps/day"
-                )
-                result['status'] = 'skipped_week'
-                
-                # Send notification about skipped week
-                if not skip_notifications:
-                    notification_result = send_goal_notification(participant, goal_data)
-                    
-                    if notification_result['success']:
-                        result['notification_sent'] = True
-                        self.stdout.write(f"    → Notification sent")
-                        _log_status_flag(participant, "send_notification_fail")
-                    else:
-                        result['notification_failed'] = True
-                        result['error_details'] = notification_result['error_message']
-                        _log_status_flag(
-                            participant,
-                            "send_notification_fail",
-                            notification_result['error_message']
-                        )
-                    
-                    # Add to message history
-                    message_entry = create_message_history_entry(
-                        notification_result, 
-                        goal_data, 
-                        participant.language
-                    )
-                    message_history = (participant.message_history or []).copy()
-                    message_history.append(message_entry)
-                    participant.message_history = message_history
-                    participant.save(update_fields=['message_history'])
-                
-                return result
-                
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"    ✗ Fallback calculation failed: {str(e)}")
-            )
-            logger.exception(f"Error in fallback calculation for participant {participant.id}")
-            result['status'] = 'error'
-            result['error_details'] = str(e)
-            return result
+  

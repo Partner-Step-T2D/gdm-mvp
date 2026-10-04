@@ -297,7 +297,8 @@ def run_weekly_algorithm(participant, use_fallback=False, fallback_days_count=No
     
     Args:
         participant: Participant object
-        use_fallback: If True, allows calculation without today's data (for 17:00 fallback)
+        use_fallback: If True, calculation runs without target-day data (22:00 fallback);
+                      the most recent day with data is excluded as possibly incomplete
         fallback_days_count: Number of days found when in fallback mode (for metadata)
     
     Returns:
@@ -366,7 +367,22 @@ def run_weekly_algorithm(participant, use_fallback=False, fallback_days_count=No
             logger.info("Week 2 - using first week logic (no previous goal)")
         
         # Get step data for the completed week
-        week_steps = get_step_data_for_week(daily_steps, analysis_week_start, analysis_week_end)
+        if use_fallback:
+            # No target-day data: the most recent day with data may be incomplete, so exclude it
+            last_data_date = None
+            for entry in daily_steps:
+                try:
+                    d = datetime.strptime(entry.get("date") or entry.get("dateTime"), "%Y-%m-%d").date()
+                    if analysis_week_start <= d <= analysis_week_end and int(entry["value"]) > 0:
+                        if last_data_date is None or d > last_data_date:
+                            last_data_date = d
+                except (ValueError, KeyError, TypeError):
+                    continue
+            effective_end = (last_data_date - timedelta(days=1)) if last_data_date else analysis_week_end
+            week_steps = get_step_data_for_week(daily_steps, analysis_week_start, effective_end)
+            logger.info(f"Fallback: excluded last data day {last_data_date}, using {len(week_steps)} days")
+        else:
+            week_steps = get_step_data_for_week(daily_steps, analysis_week_start, analysis_week_end)
         logger.info(f"Found {len(week_steps)} days of step data for analysis week")
 
         # Determine calculation method for metadata
@@ -413,7 +429,7 @@ def run_weekly_algorithm(participant, use_fallback=False, fallback_days_count=No
         # Add metadata for fallback calculations
         if calculation_method == 'partial_data':
             targets[target_week_key]['calculation_method'] = 'partial_data'
-            targets[target_week_key]['days_with_data'] = fallback_days_count or len(week_steps)
+            targets[target_week_key]['days_with_data'] = len(week_steps)
         
         participant.targets = targets
         participant.save(update_fields=["targets"])

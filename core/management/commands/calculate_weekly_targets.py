@@ -447,4 +447,51 @@ class Command(BaseCommand):
                 # Create goal_data for notification
                 goal_data = {
                     'new_target': previous_target,
-  
+                    'average_steps': 'insufficient data',
+                    'target_was_met': None,
+                    'previous_target': previous_target
+                }
+                
+                self.stdout.write(
+                    f"    → Week skipped, continuing with target: {previous_target} steps/day"
+                )
+                result['status'] = 'skipped_week'
+                
+                # Send notification about skipped week
+                if not skip_notifications:
+                    notification_result = send_goal_notification(participant, goal_data)
+                    
+                    if notification_result['success']:
+                        result['notification_sent'] = True
+                        self.stdout.write(f"    → Notification sent")
+                        _log_status_flag(participant, "send_notification_fail")
+                    else:
+                        result['notification_failed'] = True
+                        result['error_details'] = notification_result['error_message']
+                        _log_status_flag(
+                            participant,
+                            "send_notification_fail",
+                            notification_result['error_message']
+                        )
+                    
+                    # Add to message history
+                    message_entry = create_message_history_entry(
+                        notification_result, 
+                        goal_data, 
+                        participant.language
+                    )
+                    message_history = (participant.message_history or []).copy()
+                    message_history.append(message_entry)
+                    participant.message_history = message_history
+                    participant.save(update_fields=['message_history'])
+                
+                return result
+                
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f"    ✗ Fallback calculation failed: {str(e)}")
+            )
+            logger.exception(f"Error in fallback calculation for participant {participant.id}")
+            result['status'] = 'error'
+            result['error_details'] = str(e)
+            return result

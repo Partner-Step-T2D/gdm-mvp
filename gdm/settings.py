@@ -76,6 +76,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'app.partnersteps.ca',
+    '10.171.1.134',  # instance private IP, for the load balancer health check
 ]
 
 # Security settings

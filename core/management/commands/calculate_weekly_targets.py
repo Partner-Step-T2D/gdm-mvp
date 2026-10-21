@@ -159,11 +159,11 @@ class Command(BaseCommand):
                 toronto_tz = ZoneInfo('America/Toronto')
                 now_toronto = now_utc.astimezone(toronto_tz)
                 
-                if now_toronto.hour >= 22:
+                if now_toronto.hour >= 23:
                     # It's 5 PM or later - use fallback logic
                     self.stdout.write(
                         self.style.WARNING(
-                            f"⚠  {participant.user.email}: No data for target day by 22:00 - using fallback logic"
+                            f"⚠  {participant.user.email}: No data for target day by 23:00 - using fallback logic"
                         )
                     )
                     return self.calculate_with_fallback(participant, skip_notifications)
@@ -254,7 +254,7 @@ class Command(BaseCommand):
     
     def calculate_with_fallback(self, participant, skip_notifications=False):
         """
-        Fallback logic when target day has no data by 22:00.
+        Fallback logic when target day has no data by 23:00.
         The most recent day with data may be incomplete, so it is not counted.
         - If >= 4 complete days of data: Calculate from those days
         - If < 4 complete days: Skip week, keep previous target
